@@ -56,8 +56,11 @@ const authRoleMiddleware = (roles = []) => {
 // ============================
 const authAdminMiddleware = async (req, res, next) => {
   try {
+    const authHeader = req.headers.authorization;
     const token =
-      req.headers.authorization?.split(" ")[1] || req.cookies?.token;
+      authHeader?.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : req.cookies?.token;
 
     if (!token) {
       return res.status(401).json({ message: "Admin login required" });

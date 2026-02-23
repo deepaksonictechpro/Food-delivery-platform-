@@ -53,13 +53,64 @@ exports.getUserOrders = async (req, res) => {
 };
 
 // ===========================
+// Delivery Partner: view available orders (not assigned yet)
+// ===========================
+exports.getAvailableOrders = async (req, res) => {
+  try {
+    const orders = await DeliveryOrder.findAll({
+      where: { deliveryPartnerId: null, status: "pending" },
+      include: [
+        { model: Food, as: "food" },
+        { model: User, as: "user", attributes: ["id", "fullName"] },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+    
+
+    return res.status(200).json({ orders });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ===========================
+// Delivery Partner: accept/assign order to self
+// ===========================
+exports.acceptOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const order = await DeliveryOrder.findOne({
+      where: { id, deliveryPartnerId: null, status: "pending" },
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found or already assigned" });
+    }
+
+    order.deliveryPartnerId = req.user.id;
+    order.status = "picked";
+    await order.save();
+
+    return res.status(200).json({ message: "Order assigned to you", order });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ===========================
 // Delivery Partner: view assigned deliveries
 // ===========================
 exports.getAssignedDeliveries = async (req, res) => {
   try {
     const orders = await DeliveryOrder.findAll({
       where: { deliveryPartnerId: req.user.id },
-      include: [{ model: Food, as: "food" }],
+      include: [
+        { model: Food, as: "food" },
+        { model: User, as: "user", attributes: ["id", "fullName"] },
+      ],
       order: [["createdAt", "DESC"]],
     });
 

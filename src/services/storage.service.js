@@ -1,3 +1,6 @@
+// Load environment variables first
+require("dotenv").config();
+
 const ImageKit = require("imagekit");
 
 // ⚠️ Check if ImageKit env variables are properly configured
@@ -23,11 +26,10 @@ async function uploadFile(file, fileName) {
       throw new Error("No file provided for upload");
     }
 
-    // Check if ImageKit is properly configured
+    // Double-check env vars at runtime
     if (!process.env.IMAGEKIT_PUBLIC_KEY || 
-        process.env.IMAGEKIT_PUBLIC_KEY === 'xxxxxxxx' ||
-        !process.env.IMAGEKIT_PRIVATE_KEY ||
-        process.env.IMAGEKIT_PRIVATE_KEY === 'xxxxxxxx') {
+        !process.env.IMAGEKIT_PRIVATE_KEY || 
+        !process.env.IMAGEKIT_URL_ENDPOINT) {
       throw new Error("ImageKit is not properly configured. Please update your environment variables.");
     }
 

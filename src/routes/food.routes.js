@@ -1,6 +1,6 @@
 const express = require("express");
 const foodController = require("../controllers/food.controller");
-const { authUserMiddleware } = require("../middlewares/auth.middleware");
+const { authUserMiddleware, authRoleMiddleware } = require("../middlewares/auth.middleware");
 const multer = require("multer");
 
 const router = express.Router();
@@ -11,6 +11,7 @@ const upload = multer(); // memory storage
 router.post(
   "/",
   authUserMiddleware,
+  authRoleMiddleware(["food_partner"]),
   upload.single("video"),
   foodController.createFood
 );

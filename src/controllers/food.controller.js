@@ -7,11 +7,6 @@ async function createFood(req, res) {
   try {
     const { name, description } = req.body;
 
-    // Check if user is a food partner
-    if (req.user.role !== "food_partner") {
-      return res.status(403).json({ message: "Access denied: Only food partners can create food" });
-    }
-
     // Validation
     if (!name) 
       return res.status(400).json({ message: "Food name is required" });
@@ -81,6 +76,8 @@ async function likeFood(req, res) {
     const { foodId } = req.body;
     const userId = req.user.id;
 
+    if (!foodId) return res.status(400).json({ message: "foodId is required" });
+
     const existing = await Like.findOne({ where: { userId, foodId } });
 
     if (existing) {
@@ -104,6 +101,8 @@ async function saveFood(req, res) {
   try {
     const { foodId } = req.body;
     const userId = req.user.id;
+
+    if (!foodId) return res.status(400).json({ message: "foodId is required" });
 
     const existing = await Save.findOne({ where: { userId, foodId } });
 

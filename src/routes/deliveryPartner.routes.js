@@ -9,6 +9,8 @@ router.post("/", authUserMiddleware, authRoleMiddleware(["user"]), deliveryContr
 router.get("/my-orders", authUserMiddleware, authRoleMiddleware(["user"]), deliveryController.getUserOrders);
 
 /* ===== DELIVERY PARTNER APIS ===== */
+router.get("/available", authUserMiddleware, authRoleMiddleware(["delivery_partner"]), deliveryController.getAvailableOrders);
+router.post("/:id/accept", authUserMiddleware, authRoleMiddleware(["delivery_partner"]), deliveryController.acceptOrder);
 router.get("/assigned", authUserMiddleware, authRoleMiddleware(["delivery_partner"]), deliveryController.getAssignedDeliveries);
 router.patch("/:id/status", authUserMiddleware, authRoleMiddleware(["delivery_partner"]), deliveryController.updateDeliveryStatus);
 
