@@ -8,9 +8,9 @@ function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
 }
 
-// =========================
-// Register (All Roles: user, food_partner, delivery_partner)
-// =========================
+// ===================================== Register (All Roles) ===========================================
+
+
 async function registerUser(req, res) {
   try {
     const { fullName, email, password, role } = req.body;
@@ -48,9 +48,8 @@ async function registerUser(req, res) {
   }
 }
 
-// =========================
-// Verify Registration OTP
-// =========================
+// =================================== Verify Registration OTP =======================================
+
 async function verifyUserOtp(req, res) {
   try {
     const { email, otp } = req.body;
@@ -76,29 +75,46 @@ async function verifyUserOtp(req, res) {
   }
 }
 
-// =========================
-// Login (All Roles)
-// =========================
+// ===================================== Login (All Roles) =============================================
+
 async function loginUser(req, res) {
   try {
     const { email, password, role } = req.body;
-    if (!email || !password || !role)
-      return res.status(400).json({ message: "Email, password, and role are required" });
 
+    // Basic validation
+    if (!email || !password || !role) {
+      return res
+        .status(400)
+        .json({ message: "Email, password, and role are required" });
+    }
+
+    // Find user by email + role
     const user = await User.findOne({ where: { email, role } });
-    if (!user) return res.status(400).json({ message: "Invalid email, password, or role" });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "Invalid email, password, or role" });
+    }
 
-    if (!user.isOtpVerified)
-      return res.status(401).json({ message: "Please verify OTP before login" });
+    // ✅ OTP required ONLY for non-admin users
+    if (role !== "admin" && !user.isOtpVerified) {
+      return res
+        .status(401)
+        .json({ message: "Please verify OTP before login" });
+    }
 
+    // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid)
-      return res.status(400).json({ message: "Invalid email or password" });
+    if (!isPasswordValid) {
+      return res
+        .status(400)
+        .json({ message: "Invalid email or password" });
+    }
 
-    //  Correct token generation
+    // Generate JWT token
     const token = jwt.sign(
-      { id: user.id, role: user.role }, 
-      process.env.JWT_SECRET, 
+      { id: user.id, role: user.role },
+      process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
@@ -118,10 +134,9 @@ async function loginUser(req, res) {
   }
 }
 
+// =================================== Forgot Password (Send OTP) =======================================
 
-// =========================
-// Forgot Password (Send OTP)
-// =========================
+
 async function forgotPassword(req, res) {
   try {
     const { email } = req.body;
@@ -144,9 +159,9 @@ async function forgotPassword(req, res) {
   }
 }
 
-// =========================
-// Verify Forgot Password OTP
-// =========================
+// =================================== Verify Forgot Password OTP ======================================
+
+
 async function verifyForgotPasswordOtp(req, res) {
   try {
     const { email, otp } = req.body;
@@ -167,9 +182,8 @@ async function verifyForgotPasswordOtp(req, res) {
   }
 }
 
-// =========================
-// Reset Password
-// =========================
+// =================================== Reset Password =================================================
+
 async function resetPassword(req, res) {
   try {
     const { email, newPassword } = req.body;
@@ -192,7 +206,7 @@ async function resetPassword(req, res) {
   }
 }
 
-// Logout (All Roles)
+// =================================== Logout (All Roles) =================================================
 
 async function logoutUser(req, res) {
   try {
@@ -206,8 +220,9 @@ async function logoutUser(req, res) {
   }
 }
 
+// =================================== Create Admin Controller =================================================
 
-//  Create Admin Controller
+
 async function createAdmin(req, res) {
   try {
     const { fullName, email, password } = req.body;

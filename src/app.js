@@ -13,6 +13,7 @@ const sequelize = db.sequelize;
 const authRoutes = require("./routes/auth.routes");
 const foodRoutes = require("./routes/food.routes");
 const foodPartnerRoutes = require("./routes/food-partner.routes");
+const deliveryPartnerRoutes = require("./routes/deliveryPartner.routes");
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/foods", foodRoutes);
 app.use("/api/food-partners", foodPartnerRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/delivery", deliveryPartnerRoutes);
 
 
 

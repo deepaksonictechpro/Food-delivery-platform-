@@ -40,7 +40,7 @@ exports.getUserOrders = async (req, res) => {
       where: { userId: req.user.id },
       include: [
         { model: Food, as: "food" },
-        { model: User, as: "deliveryPartner", attributes: ["id", "fullName", "phone"] },
+        { model: User, as: "deliveryPartner", attributes: ["id", "fullName"] },
       ],
       order: [["createdAt", "DESC"]],
     });
