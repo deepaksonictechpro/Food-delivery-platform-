@@ -12,14 +12,4 @@ const sequelize = new Sequelize(
   }
 );
 
-async function connectDB() {
-  try {
-    await sequelize.authenticate();
-    console.log("✅ MySQL connected via Sequelize");
-  } catch (error) {
-    console.error("❌ MySQL connection failed:", error.message);
-    throw error;
-  }
-}
-
-module.exports = { sequelize, connectDB };
+module.exports = { sequelize};

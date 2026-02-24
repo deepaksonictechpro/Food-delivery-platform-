@@ -4,13 +4,7 @@ const { authUserMiddleware } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
-/**
- * GET /api/food-partner/:id
- */
-router.get(
-  "/:id",
-  authUserMiddleware,
-  foodPartnerController.getFoodPartnerById
-);
+//========================== GET /api/food-partner/:id ==================================
+router.get("/:id", authUserMiddleware, foodPartnerController.getFoodPartnerById);
 
 module.exports = router;

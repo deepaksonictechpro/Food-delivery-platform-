@@ -1,9 +1,7 @@
 require("dotenv").config();
-const adminRoutes = require("./routes/admin.routes");
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-
 
 
 const db = require("./models"); 
@@ -14,6 +12,7 @@ const authRoutes = require("./routes/auth.routes");
 const foodRoutes = require("./routes/food.routes");
 const foodPartnerRoutes = require("./routes/food-partner.routes");
 const deliveryPartnerRoutes = require("./routes/deliveryPartner.routes");
+const adminRoutes = require("./routes/admin.routes");
 
 const app = express();
 
@@ -23,16 +22,6 @@ app.use(cors({
 }));
 app.use(cookieParser());
 app.use(express.json());
-
-// Test DB connection
-(async () => {
-  try {
-    await sequelize.authenticate();
-    console.log("✅ Database connected successfully");
-  } catch (err) {
-    console.error("❌ Database connection error:", err.message);
-  }
-})();
 
 // Routes
 app.get("/", (req, res) => res.send("API running"));
