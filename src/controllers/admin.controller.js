@@ -1,11 +1,8 @@
-const bcrypt = require("bcrypt");
-//const { User } = require("../models");
 const { User, Food } = require("../models");
 
+// ========================= ADMIN DASHBOARD =========================
 
-// USER MANAGEMENT (ADMIN)
-
-//  Get all users (exclude passwords)
+// Get all users
 async function getAllUsers(req, res) {
   try {
     const users = await User.findAll({
@@ -24,46 +21,7 @@ async function getAllUsers(req, res) {
   }
 }
 
-//  Block user
-async function blockUser(req, res) {
-  try {
-    const { id } = req.params;
-
-    const user = await User.findByPk(id);
-    if (!user)
-      return res.status(404).json({ message: "User not found" });
-
-    await user.update({ isBlocked: true });
-
-    return res.json({ message: "User blocked successfully" });
-  } catch (error) {
-    console.error("BLOCK USER ERROR:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-}
-
-//  Unblock user
-async function unblockUser(req, res) {
-  try {
-    const { id } = req.params;
-
-    const user = await User.findByPk(id);
-    if (!user)
-      return res.status(404).json({ message: "User not found" });
-
-    await user.update({ isBlocked: false });
-
-    return res.json({ message: "User unblocked successfully" });
-  } catch (error) {
-    console.error("UNBLOCK USER ERROR:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-}
-
-
-// FOOD MODERATION (ADMIN)
-
-//  Get all foods
+// Get all foods
 async function getAllFoods(req, res) {
   try {
     const foods = await Food.findAll({
@@ -81,66 +39,49 @@ async function getAllFoods(req, res) {
   }
 }
 
-//  Delete food (Admin moderation)
-async function deleteFood(req, res) {
+// Get all food partners
+async function getAllFoodPartners(req, res) {
   try {
-    const { id } = req.params;
-
-    const food = await Food.findByPk(id);
-    if (!food)
-      return res.status(404).json({ message: "Food not found" });
-
-    await food.destroy();
-
-    return res.json({ message: "Food deleted successfully" });
-  } catch (error) {
-    console.error("DELETE FOOD ERROR:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-}
-
-
-// ADMIN DASHBOARD STATS
-
-
-//  Overview stats
-async function getOverviewStats(req, res) {
-  try {
-    const totalUsers = await User.count();
-    const totalFoods = await Food.count();
-
-    const foodPartners = await User.count({
+    const partners = await User.findAll({
       where: { role: "food_partner" },
-    });
-
-    const deliveryPartners = await User.count({
-      where: { role: "delivery_partner" },
+      attributes: { exclude: ["password"] },
+      order: [["createdAt", "DESC"]],
     });
 
     return res.status(200).json({
-      message: "Admin dashboard stats",
-      stats: {
-        totalUsers,
-        foodPartners,
-        deliveryPartners,
-        totalFoods,
-      },
+      message: "Food partners fetched successfully",
+      count: partners.length,
+      partners,
     });
   } catch (error) {
-    console.error("ADMIN STATS ERROR:", error);
+    console.error("GET FOOD PARTNERS ERROR:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 }
 
+// Get all delivery partners
+async function getAllDeliveryPartners(req, res) {
+  try {
+    const partners = await User.findAll({
+      where: { role: "delivery_partner" },
+      attributes: { exclude: ["password"] },
+      order: [["createdAt", "DESC"]],
+    });
 
-// EXPORTS
+    return res.status(200).json({
+      message: "Delivery partners fetched successfully",
+      count: partners.length,
+      partners,
+    });
+  } catch (error) {
+    console.error("GET DELIVERY PARTNERS ERROR:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
 
 module.exports = {
   getAllUsers,
-  blockUser,
-  unblockUser,
   getAllFoods,
-  deleteFood,
-  getOverviewStats,
+  getAllFoodPartners,
+  getAllDeliveryPartners,
 };
-

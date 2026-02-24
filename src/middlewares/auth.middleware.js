@@ -1,70 +1,48 @@
 const jwt = require("jsonwebtoken");
 const { User } = require("../models");
 
-// ============================
-// Authenticate user (JWT)
-// ============================
+// Helper to extract token from header/cookies
+const getTokenFromRequest = (req) => {
+  const authHeader = req.headers.authorization;
+  return authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : req.cookies?.token;
+};
+
+// ===================== AUTH USER =====================
 const authUserMiddleware = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token =
-      authHeader?.startsWith("Bearer ")
-        ? authHeader.split(" ")[1]
-        : req.cookies?.token;
+    const token = getTokenFromRequest(req);
 
-    if (!token) {
-      return res.status(401).json({ message: "Please login first" });
-    }
+    if (!token) return res.status(401).json({ message: "Please login first" });
 
-    // ✅ VERIFY token (NOT sign)
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     const user = await User.findByPk(decoded.id);
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
-    }
+
+    if (!user) return res.status(401).json({ message: "User not found" });
 
     req.user = user;
     next();
   } catch (err) {
     console.error("[AuthMiddleware]", err.message);
     return res.status(401).json({
-      message:
-        err.name === "TokenExpiredError"
-          ? "Token expired"
-          : "Invalid token",
+      message: err.name === "TokenExpiredError" ? "Token expired" : "Invalid token",
     });
   }
 };
 
-// ============================
-// Role-based access middleware
-// ============================
-const authRoleMiddleware = (roles = []) => {
-  return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({
-        message: "You are not allowed to access this resource",
-      });
-    }
-    next();
-  };
+// ===================== ROLE-BASED ACCESS =====================
+const authRoleMiddleware = (roles = []) => (req, res, next) => {
+  if (!req.user || !roles.includes(req.user.role)) {
+    return res.status(403).json({ message: "You are not allowed to access this resource" });
+  }
+  next();
 };
 
-// ============================
-// Admin middleware
-// ============================
+// ===================== ADMIN AUTH =====================
 const authAdminMiddleware = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token =
-      authHeader?.startsWith("Bearer ")
-        ? authHeader.split(" ")[1]
-        : req.cookies?.token;
+    const token = getTokenFromRequest(req);
 
-    if (!token) {
-      return res.status(401).json({ message: "Admin login required" });
-    }
+    if (!token) return res.status(401).json({ message: "Admin login required" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findByPk(decoded.id);
@@ -73,15 +51,16 @@ const authAdminMiddleware = async (req, res, next) => {
       return res.status(403).json({ message: "Admin access only" });
     }
 
-    req.admin = user;
+    req.user = user; // standardize to req.user
     next();
   } catch (err) {
+    console.error("[AuthAdminMiddleware]", err.message);
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 
 module.exports = {
   authUserMiddleware,
-  authRoleMiddleware,   // ✅ NOW EXISTS
+  authRoleMiddleware,
   authAdminMiddleware,
 };
