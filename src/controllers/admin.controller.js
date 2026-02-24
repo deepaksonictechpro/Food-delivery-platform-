@@ -1,4 +1,4 @@
-const { User, Food } = require("../models");
+const { User, Food, DeliveryOrder } = require("../models");
 
 // ========================= ADMIN DASHBOARD =========================
 
@@ -79,9 +79,36 @@ async function getAllDeliveryPartners(req, res) {
   }
 }
 
+// ========================= DASHBOARD STATS =========================
+async function getDashboardStats(req, res) {
+  try {
+    const totalUsers = await User.count();
+    const totalFoods = await Food.count();
+    const foodPartners = await User.count({ where: { role: "food_partner" } });
+    const deliveryPartners = await User.count({ where: { role: "delivery_partner" } });
+    const totalOrders = await DeliveryOrder.count();
+
+    return res.status(200).json({
+      message: "Admin dashboard stats",
+      stats: {
+        totalUsers,
+        totalFoods,
+        foodPartners,
+        deliveryPartners,
+        totalOrders,
+      },
+    });
+  } catch (error) {
+    console.error("DASHBOARD STATS ERROR:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+
 module.exports = {
   getAllUsers,
   getAllFoods,
   getAllFoodPartners,
   getAllDeliveryPartners,
+  getDashboardStats,
 };
