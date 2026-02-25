@@ -1,5 +1,7 @@
 const { User, Food } = require("../models");
 
+//================================= Get Food Partner By ID  =====================================
+
 async function getFoodPartnerById(req, res) {
   try {
     const id = req.params.id;

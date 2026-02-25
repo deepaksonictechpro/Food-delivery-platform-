@@ -136,7 +136,6 @@ async function loginUser(req, res) {
 
 // =================================== Forgot Password (Send OTP) =======================================
 
-
 async function forgotPassword(req, res) {
   try {
     const { email } = req.body;

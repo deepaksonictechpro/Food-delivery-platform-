@@ -7,7 +7,7 @@ const getTokenFromRequest = (req) => {
   return authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : req.cookies?.token;
 };
 
-// ===================== AUTH USER =====================
+// ==================================== AUTH USER ==================================================
 const authUserMiddleware = async (req, res, next) => {
   try {
     const token = getTokenFromRequest(req);
@@ -29,7 +29,7 @@ const authUserMiddleware = async (req, res, next) => {
   }
 };
 
-// ===================== ROLE-BASED ACCESS =====================
+// ==================================== ROLE-BASED ACCESS ===================================
 const authRoleMiddleware = (roles = []) => (req, res, next) => {
   if (!req.user || !roles.includes(req.user.role)) {
     return res.status(403).json({ message: "You are not allowed to access this resource" });
@@ -37,7 +37,7 @@ const authRoleMiddleware = (roles = []) => (req, res, next) => {
   next();
 };
 
-// ===================== ADMIN AUTH =====================
+// =================================== ADMIN AUTH ================================================
 const authAdminMiddleware = async (req, res, next) => {
   try {
     const token = getTokenFromRequest(req);

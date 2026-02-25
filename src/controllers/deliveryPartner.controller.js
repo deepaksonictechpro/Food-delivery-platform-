@@ -1,8 +1,6 @@
 const { DeliveryOrder, Food, User } = require("../models");
 
-/* ===========================
-   USER places order
-=========================== */
+// ================================== USER places order ==============================================
 exports.placeOrder = async (req, res) => {
   try {
     const { foodId, quantity, address, paymentMethod } = req.body;
@@ -29,9 +27,8 @@ exports.placeOrder = async (req, res) => {
   }
 };
 
-/* ===========================
-   USER: my orders
-=========================== */
+//==================================== USER: my orders ============================================= 
+
 exports.getUserOrders = async (req, res) => {
   try {
     const orders = await DeliveryOrder.findAll({
@@ -46,9 +43,8 @@ exports.getUserOrders = async (req, res) => {
   }
 };
 
-/* ===========================
-   DELIVERY PARTNER: available
-=========================== */
+//=============================== DELIVERY PARTNER: available =========================================
+
 exports.getAvailableOrders = async (req, res) => {
   try {
     const orders = await DeliveryOrder.findAll({
@@ -68,9 +64,9 @@ exports.getAvailableOrders = async (req, res) => {
   }
 };
 
-/* ===========================
-   DELIVERY PARTNER: accept
-=========================== */
+// =================================  DELIVERY PARTNER: accept  ========================================
+   
+
 exports.acceptOrder = async (req, res) => {
   try {
     const { id } = req.params;
@@ -102,9 +98,9 @@ exports.acceptOrder = async (req, res) => {
   }
 };
 
-/* ===========================
-   DELIVERY PARTNER: assigned
-=========================== */
+//===============================  DELIVERY PARTNER: assigned  ==============================================
+   
+
 exports.getAssignedDeliveries = async (req, res) => {
   try {
     const orders = await DeliveryOrder.findAll({
@@ -124,9 +120,8 @@ exports.getAssignedDeliveries = async (req, res) => {
   }
 };
 
-/* ===========================
-   DELIVERY PARTNER: status
-=========================== */
+//================================ DELIVERY PARTNER: status ===========================================
+   
 exports.updateDeliveryStatus = async (req, res) => {
   try {
     const { id } = req.params;

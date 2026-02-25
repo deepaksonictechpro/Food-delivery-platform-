@@ -9,7 +9,6 @@ router.get("/foods", authAdminMiddleware, adminController.getAllFoods);
 router.get("/partners/food", authAdminMiddleware, adminController.getAllFoodPartners);
 router.get("/partners/delivery", authAdminMiddleware, adminController.getAllDeliveryPartners);
 
-// Dashboard stats
-router.get("/stats/dashboard", authAdminMiddleware, adminController.getDashboardStats);
+
 
 module.exports = router;

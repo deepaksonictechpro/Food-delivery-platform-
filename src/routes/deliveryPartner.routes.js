@@ -4,11 +4,11 @@ const { authUserMiddleware, authRoleMiddleware } = require("../middlewares/auth.
 
 const router = express.Router();
 
-/* ===== USER DELIVERY APIS ===== */
+//=================== USER DELIVERY APIS ===========================
 router.post("/", authUserMiddleware, authRoleMiddleware(["user"]), deliveryController.placeOrder);
 router.get("/my-orders", authUserMiddleware, authRoleMiddleware(["user"]), deliveryController.getUserOrders);
 
-/* ===== DELIVERY PARTNER APIS ===== */
+//============== DELIVERY PARTNER APIS =============================
 router.get("/available", authUserMiddleware, authRoleMiddleware(["delivery_partner"]), deliveryController.getAvailableOrders);
 router.post("/:id/accept", authUserMiddleware, authRoleMiddleware(["delivery_partner"]), deliveryController.acceptOrder);
 router.get("/assigned", authUserMiddleware, authRoleMiddleware(["delivery_partner"]), deliveryController.getAssignedDeliveries);
