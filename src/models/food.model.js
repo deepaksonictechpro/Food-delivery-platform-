@@ -18,9 +18,20 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
 
-      video: {
+      category: {          
         type: DataTypes.STRING,
         allowNull: false,
+      },
+
+      price: {           
+        type: DataTypes.FLOAT.UNSIGNED,
+        allowNull: false,
+        defaultValue: 0,
+      },
+
+      video: {
+        type: DataTypes.STRING,
+        allowNull: false,  // Optional: true if you want video optional
       },
 
       likeCount: {
@@ -59,7 +70,7 @@ module.exports = (sequelize, DataTypes) => {
     if (models.Like) Food.hasMany(models.Like, { foreignKey: "foodId" });
     if (models.Save) Food.hasMany(models.Save, { foreignKey: "foodId" });
 
-    // ✅ Food → Delivery Orders (FIXED)
+    // Food → Delivery Orders
     Food.hasMany(models.DeliveryOrder, {
       foreignKey: "foodId",
       as: "orders",

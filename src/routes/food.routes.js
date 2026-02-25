@@ -1,13 +1,16 @@
 const express = require("express");
+const multer = require("multer");
 const foodController = require("../controllers/food.controller");
 const { authUserMiddleware, authRoleMiddleware } = require("../middlewares/auth.middleware");
-const multer = require("multer");
 
 const router = express.Router();
-const upload = multer(); // memory storage
+const upload = multer(); // memory storage (for video)
 
-// ===== FOOD PARTNER =====
-// Create food with video upload
+// ============================== PUBLIC ==============================
+router.get("/search", foodController.searchFoods);
+router.get("/mine", authUserMiddleware, authRoleMiddleware(["food_partner"]), foodController.getMyFoods);
+
+// =========================== FOOD PARTNER (CREATE FOOD + VIDEO) ===============================
 router.post(
   "/",
   authUserMiddleware,
@@ -16,10 +19,7 @@ router.post(
   foodController.createFood
 );
 
-// Get all food reels
-router.get("/", foodController.getFoodItems);
-
-// ===== USER =====
+// ============================== USER ==============================
 router.post("/like", authUserMiddleware, foodController.likeFood);
 router.post("/save", authUserMiddleware, foodController.saveFood);
 router.get("/saved", authUserMiddleware, foodController.getSaveFood);
