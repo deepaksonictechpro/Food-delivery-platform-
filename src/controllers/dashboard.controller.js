@@ -92,7 +92,7 @@ const getAdminDashboardStats = async (req, res) => {
       User.count({ where: { role: "delivery_partner" } }),
       DeliveryOrder.count(),
     ]);
-
+                                                          
     res.status(200).json({
       success: true,
       data: {
