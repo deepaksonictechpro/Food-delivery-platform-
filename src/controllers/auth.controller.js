@@ -1,257 +1,103 @@
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const { User } = require("../models");
-require("dotenv").config();
+const authService = require("../services/auth.services");
 
-// Helper to generate OTP
-function generateOtp() {
-  return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
-}
-
-// ===================================== Register (All Roles) ===========================================
-
+// ======================================== REGISTER =================================================
 
 async function registerUser(req, res) {
   try {
-    const { fullName, email, password, role } = req.body;
-    if (!fullName || !email || !password || !role)
-      return res.status(400).json({ message: "All fields including role are required" });
-
-    const allowedRoles = ["user", "food_partner", "delivery_partner"];
-    if (!allowedRoles.includes(role))
-      return res.status(400).json({ message: "Invalid role" });
-
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) return res.status(400).json({ message: "User already exists" });
-
-    const otp = generateOtp();
-
-    const user = await User.create({
-      fullName,
-      email,
-      password, // model will hash automatically
-      otp,
-      isOtpVerified: false,
-      role,
-    });
-
-    console.log(`OTP for ${email}: ${otp}`);
-
-    return res.status(201).json({
+    const result = await authService.registerUserService(req.body);
+    res.status(201).json({
       message: "OTP sent. Verify to complete registration",
-      userId: user.id,
-      role: user.role,
+      ...result,
     });
-  } catch (error) {
-    console.error("REGISTER USER ERROR:", error);
-    return res.status(500).json({ message: "Internal server error" });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 }
 
-// =================================== Verify Registration OTP =======================================
+// ==================================== VERIFY REGISTRATION OTP ====================================
 
 async function verifyUserOtp(req, res) {
   try {
-    const { email, otp } = req.body;
-    if (!email || !otp) return res.status(400).json({ message: "Email and OTP are required" });
-
-    const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    if (user.otp !== otp) return res.status(400).json({ message: "Invalid OTP" });
-
-    user.isOtpVerified = true;
-    user.otp = null; // clear OTP after verification
-    await user.save();
-
-    return res.status(200).json({
+    const result = await authService.verifyUserOtpService(req.body.email, req.body.otp);
+    res.status(200).json({
       message: "OTP verified. Registration complete!",
-      role: user.role,
-      userId: user.id,
+      ...result,
     });
-  } catch (error) {
-    console.error("VERIFY USER OTP ERROR:", error);
-    return res.status(500).json({ message: "Internal server error" });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 }
 
-// ===================================== Login (All Roles) =============================================
+// ======================================== LOGIN ====================================================
 
 async function loginUser(req, res) {
   try {
-    const { email, password, role } = req.body;
-
-    // Basic validation
-    if (!email || !password || !role) {
-      return res
-        .status(400)
-        .json({ message: "Email, password, and role are required" });
-    }
-
-    // Find user by email + role
-    const user = await User.findOne({ where: { email, role } });
-    if (!user) {
-      return res
-        .status(400)
-        .json({ message: "Invalid email, password, or role" });
-    }
-
-    // ✅ OTP required ONLY for non-admin users
-    if (role !== "admin" && !user.isOtpVerified) {
-      return res
-        .status(401)
-        .json({ message: "Please verify OTP before login" });
-    }
-
-    // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res
-        .status(400)
-        .json({ message: "Invalid email or password" });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: user.id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    return res.status(200).json({
-      message: `${role} logged in successfully`,
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        role: user.role,
-      },
+    const result = await authService.loginUserService(req.body);
+    res.status(200).json({
+      message: `${req.body.role} logged in successfully`,
+      ...result,
     });
-  } catch (error) {
-    console.error("LOGIN USER ERROR:", error);
-    return res.status(500).json({ message: "Internal server error" });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 }
 
-// =================================== Forgot Password (Send OTP) =======================================
+// ==================================== FORGOT PASSWORD =============================================
 
 async function forgotPassword(req, res) {
   try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ message: "Email is required" });
-
-    const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const otp = generateOtp();
-    user.otp = otp;
-    user.isOtpVerified = false; // reset OTP verification for forgot-password
-    await user.save();
-
-    console.log(`Forgot password OTP for ${email}: ${otp}`);
-
-    return res.status(200).json({ message: "OTP sent for password reset" });
-  } catch (error) {
-    console.error("FORGOT PASSWORD ERROR:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    const result = await authService.forgotPasswordService(req.body.email);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 }
 
-// =================================== Verify Forgot Password OTP ======================================
-
+// ================================== VERIFY FORGOT PASSWORD OTP ====================================
 
 async function verifyForgotPasswordOtp(req, res) {
   try {
-    const { email, otp } = req.body;
-    if (!email || !otp) return res.status(400).json({ message: "Email and OTP are required" });
-
-    const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    if (user.otp !== otp) return res.status(400).json({ message: "Invalid OTP" });
-
-    user.isOtpVerified = true; // mark OTP verified for reset
-    await user.save();
-
-    return res.status(200).json({ message: "OTP verified. You can now reset password" });
-  } catch (error) {
-    console.error("VERIFY FORGOT OTP ERROR:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    const result = await authService.verifyForgotPasswordOtpService(req.body.email, req.body.otp);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 }
 
-// =================================== Reset Password =================================================
+// ===================================== RESET PASSWORD ===========================================
 
 async function resetPassword(req, res) {
   try {
-    const { email, newPassword } = req.body;
-    if (!email || !newPassword) return res.status(400).json({ message: "Email and new password are required" });
-
-    const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    if (!user.isOtpVerified) return res.status(401).json({ message: "Please verify OTP first" });
-
-    user.password = await bcrypt.hash(newPassword, 10);
-    user.otp = null;
-    user.isOtpVerified = true;
-    await user.save();
-
-    return res.status(200).json({ message: "Password reset successfully" });
-  } catch (error) {
-    console.error("RESET PASSWORD ERROR:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    const result = await authService.resetPasswordService(req.body.email, req.body.newPassword);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 }
 
-// =================================== Logout (All Roles) =================================================
+// ==================================== LOGOUT ============================================
 
 async function logoutUser(req, res) {
   try {
-    // With JWT, just ask client to delete token
-    return res.status(200).json({
-      message: "User logged out successfully",
-    });
-  } catch (error) {
-    console.error("LOGOUT ERROR:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    const result = await authService.logoutService();
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 }
 
-// =================================== Create Admin Controller =================================================
-
+// ==================================== CREATE ADMIN =======================================
 
 async function createAdmin(req, res) {
   try {
-    const { fullName, email, password } = req.body;
-    if (!fullName || !email || !password) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
-    }
-
-    const existingAdmin = await User.findOne({ where: { email, role: "admin" } });
-    if (existingAdmin) {
-      return res.status(400).json({ success: false, message: "Admin already exists" });
-    }
-
-    const admin = await User.create({
-      fullName,
-      email,
-      password, // Model will hash automatically
-      role: "admin",
-    });
-
-    const token = jwt.sign({ id: admin.id, role: admin.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
-
+    const result = await authService.createAdminService(req.body);
     res.status(201).json({
       success: true,
       message: "Admin created successfully",
-      admin: { id: admin.id, fullName: admin.fullName, email: admin.email, role: admin.role },
-      token,
+      ...result,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(400).json({ success: false, message: err.message });
   }
 }
 

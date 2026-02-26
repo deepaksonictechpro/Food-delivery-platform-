@@ -5,6 +5,7 @@ const dashboardController = require("../controllers/dashboard.controller");
 const {
   authUserMiddleware,
   authAdminMiddleware,
+  authRoleMiddleware,
 } = require("../middlewares/auth.middleware");
 
 /* ========================== FOOD PARTNER DASHBOARD ========================== */
@@ -20,5 +21,14 @@ router.get(
   authAdminMiddleware,
   dashboardController.getAdminDashboardStats
 );
+
+/* ============ DELIVERY PARTNER DASHBOARD ============ */
+router.get(
+  "/delivery-partner",
+  authUserMiddleware,
+  authRoleMiddleware(["delivery_partner"]),
+  dashboardController.getDeliveryPartnerDashboard
+);
+
 
 module.exports = router;

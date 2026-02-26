@@ -40,6 +40,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+
+    earning: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
+    },
   });
 
   // =====================

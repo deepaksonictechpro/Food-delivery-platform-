@@ -22,6 +22,6 @@ router.post(
 // ============================== USER ==============================
 router.post("/like", authUserMiddleware, foodController.likeFood);
 router.post("/save", authUserMiddleware, foodController.saveFood);
-router.get("/saved", authUserMiddleware, foodController.getSaveFood);
+router.get("/saved", authUserMiddleware, foodController.getSavedFoods);
 
 module.exports = router;

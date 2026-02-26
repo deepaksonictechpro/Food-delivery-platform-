@@ -1,19 +1,19 @@
-const { User, Food } = require("../models");
+const foodPartnerService = require("../services/food-partner.services");
 
-//================================= Get Food Partner By ID  =====================================
+// ====================== FOOD PARTNER CONTROLLER ======================
 
 async function getFoodPartnerById(req, res) {
   try {
     const id = req.params.id;
+    const foodPartner = await foodPartnerService.fetchFoodPartnerById(id);
 
-    const fp = await User.findOne({ where: { id, role: "food_partner" } });
-    if (!fp) return res.status(404).json({ message: "Food partner not found" });
-
-    const foods = await Food.findAll({ where: { foodPartnerId: id } });
+    if (!foodPartner) {
+      return res.status(404).json({ message: "Food partner not found" });
+    }
 
     res.status(200).json({
       message: "Food partner retrieved successfully",
-      foodPartner: { ...fp.toJSON(), foods },
+      foodPartner,
     });
   } catch (error) {
     console.error("GET FOOD PARTNER ERROR:", error);

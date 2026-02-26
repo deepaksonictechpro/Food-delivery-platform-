@@ -1,15 +1,12 @@
-const { User, Food, DeliveryOrder } = require("../models");
+const adminService = require("../services/admin.services");
 
-// ========================================= ADMIN DASHBOARD ==============================================
+// ========================= ADMIN CONTROLLER =========================
 
-// -----------------------------------  Get all users ------------------------------------------------
+//--------------------------------------- Get all users ---------------------------------------------
+
 async function getAllUsers(req, res) {
   try {
-    const users = await User.findAll({
-      attributes: { exclude: ["password"] },
-      order: [["createdAt", "DESC"]],
-    });
-
+    const users = await adminService.fetchAllUsers();
     return res.status(200).json({
       message: "Users fetched successfully",
       count: users.length,
@@ -21,13 +18,11 @@ async function getAllUsers(req, res) {
   }
 }
 
-//------------------------------------  Get all foods  -------------------------------------------------
+//--------------------------------------- Get all foods ---------------------------------------------
+
 async function getAllFoods(req, res) {
   try {
-    const foods = await Food.findAll({
-      order: [["createdAt", "DESC"]],
-    });
-
+    const foods = await adminService.fetchAllFoods();
     return res.status(200).json({
       message: "Foods fetched successfully",
       count: foods.length,
@@ -39,15 +34,11 @@ async function getAllFoods(req, res) {
   }
 }
 
-//--------------------------------------- Get all food partners  ----------------------------------------
+//--------------------------------------- Get all food partner---------------------------------------
+
 async function getAllFoodPartners(req, res) {
   try {
-    const partners = await User.findAll({
-      where: { role: "food_partner" },
-      attributes: { exclude: ["password"] },
-      order: [["createdAt", "DESC"]],
-    });
-
+    const partners = await adminService.fetchAllFoodPartners();
     return res.status(200).json({
       message: "Food partners fetched successfully",
       count: partners.length,
@@ -59,15 +50,11 @@ async function getAllFoodPartners(req, res) {
   }
 }
 
-//---------------------------------- Get all delivery partners  -----------------------------------------
+//--------------------------------------- Get all delivery partners ----------------------------------
+
 async function getAllDeliveryPartners(req, res) {
   try {
-    const partners = await User.findAll({
-      where: { role: "delivery_partner" },
-      attributes: { exclude: ["password"] },
-      order: [["createdAt", "DESC"]],
-    });
-
+    const partners = await adminService.fetchAllDeliveryPartners();
     return res.status(200).json({
       message: "Delivery partners fetched successfully",
       count: partners.length,
@@ -78,7 +65,6 @@ async function getAllDeliveryPartners(req, res) {
     return res.status(500).json({ message: "Internal server error" });
   }
 }
-
 
 module.exports = {
   getAllUsers,

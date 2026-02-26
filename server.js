@@ -11,7 +11,7 @@ async function startServer() {
     await sequelize.authenticate();
     console.log("✅ Database connected successfully");
 
-    // Sync models ONLY when needed (development/migrations)
+    // // Sync models ONLY when needed (development/migrations)
     // await sequelize.sync({ alter: true });
     // console.log("✅ Models synchronized");
 
