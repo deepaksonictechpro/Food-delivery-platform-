@@ -1,7 +1,5 @@
 const adminService = require("../services/admin.services");
 
-// ========================= ADMIN CONTROLLER =========================
-
 //--------------------------------------- Get all users ---------------------------------------------
 
 async function getAllUsers(req, res) {

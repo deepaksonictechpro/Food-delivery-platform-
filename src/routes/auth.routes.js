@@ -1,19 +1,69 @@
 const express = require("express");
 const authController = require("../controllers/auth.controller");
+const validate = require("../middlewares/validate.middleware");
+
+const {
+  registerSchema,
+  verifyOtpSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  verifyForgotOtpSchema,
+  resetPasswordSchema,
+  createAdminSchema,
+} = require("../validations/auth.validation");
 
 const router = express.Router();
 
-router.post("/register", authController.registerUser);
-router.post("/verify-otp", authController.verifyUserOtp);
-router.post("/login", authController.loginUser);
+// ================= REGISTER =================
+router.post(
+  "/register",
+  validate(registerSchema),
+  authController.registerUser
+);
 
-router.post("/forgot-password", authController.forgotPassword);
-router.post("/forgot-password/verify-otp", authController.verifyForgotPasswordOtp);
-router.post("/reset-password", authController.resetPassword);
+// ================= VERIFY REGISTER OTP =================
+router.post(
+  "/verify-otp",
+  validate(verifyOtpSchema),
+  authController.verifyUserOtp
+);
 
+// ================= LOGIN =================
+router.post(
+  "/login",
+  validate(loginSchema),
+  authController.loginUser
+);
+
+// ================= FORGOT PASSWORD =================
+router.post(
+  "/forgot-password",
+  validate(forgotPasswordSchema),
+  authController.forgotPassword
+);
+
+// ================= VERIFY FORGOT OTP =================
+router.post(
+  "/forgot-password/verify-otp",
+  validate(verifyForgotOtpSchema),
+  authController.verifyForgotPasswordOtp
+);
+
+// ================= RESET PASSWORD =================
+router.post(
+  "/reset-password",
+  validate(resetPasswordSchema),
+  authController.resetPassword
+);
+
+// ================= LOGOUT =================
 router.post("/logout", authController.logoutUser);
 
-// ✅ ADD Create Admin
-router.post("/create-admin", authController.createAdmin);
+// ================= CREATE ADMIN =================
+router.post(
+  "/create-admin",
+  validate(createAdminSchema),
+  authController.createAdmin
+);
 
 module.exports = router;

@@ -1,7 +1,14 @@
+// src/routes/deliveryPartner.routes.js
 const express = require("express");
 const router = express.Router();
 
 const deliveryController = require("../controllers/deliveryPartner.controller");
+const validate = require("../middlewares/validate.middleware");
+const {
+  placeOrderSchema,
+  updateDeliveryStatusSchema,
+} = require("../validations/deliveryPartner.validation");
+
 const {
   authUserMiddleware,
   authRoleMiddleware,
@@ -14,6 +21,7 @@ router.post(
   "/",
   authUserMiddleware,
   authRoleMiddleware(["user"]),
+  validate(placeOrderSchema), // ✅ Joi validation
   deliveryController.placeOrder
 );
 
@@ -56,6 +64,7 @@ router.patch(
   "/:id/status",
   authUserMiddleware,
   authRoleMiddleware(["delivery_partner"]),
+  validate(updateDeliveryStatusSchema), // ✅ Joi validation
   deliveryController.updateDeliveryStatus
 );
 

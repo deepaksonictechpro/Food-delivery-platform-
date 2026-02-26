@@ -12,7 +12,7 @@ const foodRoutes = require("./routes/food.routes");
 const foodPartnerRoutes = require("./routes/food-partner.routes");
 const deliveryPartnerRoutes = require("./routes/deliveryPartner.routes");
 const adminRoutes = require("./routes/admin.routes");
-const dashboardRoutes = require("./routes/dashboard.routes"); // UPDATED
+const dashboardRoutes = require("./routes/dashboard.routes");
 
 const app = express();
 
