@@ -1,4 +1,4 @@
-const deliveryService = require("../services/deliveryPartner.services");
+const deliveryService = require("../services/DeliveryOrders.services");
 
 //================================= USER places order ===================================
 

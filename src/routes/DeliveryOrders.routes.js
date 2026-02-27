@@ -2,12 +2,12 @@
 const express = require("express");
 const router = express.Router();
 
-const deliveryController = require("../controllers/deliveryPartner.controller");
+const deliveryController = require("../controllers/DeliveryOrders.controller");
 const validate = require("../middlewares/validate.middleware");
 const {
   placeOrderSchema,
   updateDeliveryStatusSchema,
-} = require("../validations/deliveryPartner.validation");
+} = require("../validations/DeliveryOrders.validation");
 
 const {
   authUserMiddleware,
