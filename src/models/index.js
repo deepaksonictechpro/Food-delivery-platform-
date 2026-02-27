@@ -11,6 +11,7 @@ db.Food = require("./food.model")(sequelize, DataTypes);
 db.Like = require("./likes.model")(sequelize, DataTypes);
 db.Save = require("./save.model")(sequelize, DataTypes);
 db.DeliveryOrder = require("./DeliveryOrder.model")(sequelize, DataTypes);
+db.Cart = require("./Cart.model")(sequelize, DataTypes);
 
 // =====================
 // Attach Sequelize
