@@ -4,7 +4,7 @@ const {
   getPendingCancelRequestsService, 
 } = require("../services/orderCancellation.services");
 
-// ================= USER CANCEL REQUEST =================
+//-------------------------------- USER REQUESTS ORDER CANCELLATION --------------------------------
 const requestCancelOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -17,7 +17,7 @@ const requestCancelOrder = async (req, res) => {
   }
 };
 
-// ================= ADMIN: GET PENDING CANCEL REQUESTS =================
+//------------------------------- ADMIN GETS PENDING CANCEL REQUESTS --------------------------------
 const getPendingCancelRequests = async (req, res) => {
   try {
     const orders = await getPendingCancelRequestsService(); 
@@ -28,7 +28,7 @@ const getPendingCancelRequests = async (req, res) => {
   }
 };
 
-// ================= ADMIN CANCEL DECISION =================
+//------------------------------- ADMIN HANDLES CANCEL DECISION --------------------------------
 const handleCancelDecision = async (req, res) => {
   try {
     const { orderId } = req.params;

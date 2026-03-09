@@ -11,6 +11,7 @@ const foodController = require("../controllers/food.controller");
 const { authUserMiddleware, authRoleMiddleware } = require("../middlewares/auth.middleware");
 
 //--------------------------------- GET FOOD PARTNER INFO --------------------------------------------
+
 router.get(
   "/:id/food-partner-info",
   authUserMiddleware,

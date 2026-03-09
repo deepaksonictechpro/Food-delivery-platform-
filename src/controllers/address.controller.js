@@ -1,6 +1,7 @@
 const addressService = require("../services/address.services");
 
-// ================= Add New Address =================
+// --------------------------------- Add new address -------------------------------------
+
 async function addAddress(req, res) {
   try {
     const address = await addressService.addAddressService(req.user.id, req.body);
@@ -11,7 +12,7 @@ async function addAddress(req, res) {
   }
 }
 
-// ================= Get User Addresses =================
+// --------------------------------- Get User Addresses -------------------------------------
 async function getUserAddresses(req, res) {
   try {
     const addresses = await addressService.getUserAddressesService(req.user.id);
@@ -22,7 +23,7 @@ async function getUserAddresses(req, res) {
   }
 }
 
-// ================= Update Address =================
+// --------------------------------- Update Address -------------------------------------
 async function updateAddress(req, res) {
   try {
     const address = await addressService.updateAddressService(req.user.id, req.params.id, req.body);
@@ -33,7 +34,7 @@ async function updateAddress(req, res) {
   }
 }
 
-// ================= Delete Address =================
+//---------------------------------- Delete Address -------------------------------------
 async function deleteAddress(req, res) {
   try {
     const result = await addressService.deleteAddressService(req.user.id, req.params.id);

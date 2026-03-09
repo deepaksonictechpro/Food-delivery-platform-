@@ -1,6 +1,7 @@
 const { Cart } = require("../models");
 
-// ================= ADD TO CART =================
+//------------------------------- ADD TO CART --------------------------------------
+
 async function addToCartService(userId, foodId, quantity) {
   const cartItem = await Cart.findOne({ where: { userId, foodId } });
 
@@ -13,7 +14,8 @@ async function addToCartService(userId, foodId, quantity) {
   return Cart.create({ userId, foodId, quantity });
 }
 
-// ================= GET CART =================
+//------------------------------- GET CART ITEMS --------------------------------------
+
 async function getCartService(userId) {
   const cartItems = await Cart.findAll({
     where: { userId },
@@ -35,7 +37,8 @@ async function getCartService(userId) {
   }));
 }
 
-// ================= UPDATE CART =================
+//------------------------------- UPDATE CART ITEM QUANTITY --------------------------------------
+
 async function updateCartItemService(userId, foodId, quantity) {
   const cartItem = await Cart.findOne({ where: { userId, foodId } });
 
@@ -47,7 +50,8 @@ async function updateCartItemService(userId, foodId, quantity) {
   return cartItem;
 }
 
-// ================= REMOVE CART ITEM =================
+//------------------------------- REMOVE FROM CART --------------------------------------
+
 async function removeFromCartService(userId, foodId) {
   const cartItem = await Cart.findOne({ where: { userId, foodId } });
   if (!cartItem) throw new Error("Cart item not found");

@@ -3,7 +3,8 @@ const { DeliveryOrder, Food, User } = require("../models");
 const { PER_DELIVERY_EARNING } = require("../constants/delivery.constants");
 const { removeFromCartService } = require("./cart.services");
 
-// ===================== Helper: Clean Order Response =====================
+//------------------------------- CLEAN ORDER RESPONSE --------------------------------------
+
 function cleanOrderResponse(order) {
   const response = {
     id: order.id,
@@ -40,7 +41,8 @@ function cleanOrderResponse(order) {
   return response;
 }
 
-// ===================== Place Order from Cart =====================
+//------------------------------- PLACE ORDER SERVICE --------------------------------------
+
 async function placeOrderService(userId, cartItems, address, paymentMethod) {
   if (!cartItems || !cartItems.length) throw new Error("Cart is empty");
 
@@ -72,7 +74,8 @@ async function placeOrderService(userId, cartItems, address, paymentMethod) {
   return orders;
 }
 
-// ===================== Get Orders of a Specific User =====================
+// ------------------------------- GET USER ORDERS SERVICE --------------------------------------
+
 async function getUserOrdersService(userId) {
   const orders = await DeliveryOrder.findAll({
     where: { userId },
@@ -83,7 +86,8 @@ async function getUserOrdersService(userId) {
   return orders.map(cleanOrderResponse);
 }
 
-// ===================== Get All Available Orders for Delivery Partner =====================
+// ------------------------------- GET AVAILABLE ORDERS SERVICE --------------------------------------
+
 async function getAvailableOrdersService() {
   const orders = await DeliveryOrder.findAll({
     where: { deliveryPartnerId: null, status: "pending" },
@@ -96,7 +100,8 @@ async function getAvailableOrdersService() {
   return orders.map(cleanOrderResponse);
 }
 
-// ===================== Accept an Order =====================
+// ------------------------------- ACCEPT ORDER SERVICE --------------------------------------
+
 async function acceptOrderService(orderId, deliveryPartnerId) {
   const order = await DeliveryOrder.findOne({
     where: { id: orderId, status: "pending", deliveryPartnerId: null },
@@ -115,7 +120,8 @@ async function acceptOrderService(orderId, deliveryPartnerId) {
   return cleanOrderResponse(order);
 }
 
-// ===================== Get Assigned Deliveries for Delivery Partner =====================
+//------------------------------- GET ASSIGNED DELIVERIES SERVICE --------------------------------------
+
 async function getAssignedDeliveriesService(deliveryPartnerId) {
   const orders = await DeliveryOrder.findAll({
     where: { deliveryPartnerId },
@@ -129,7 +135,8 @@ async function getAssignedDeliveriesService(deliveryPartnerId) {
   return orders.map(cleanOrderResponse);
 }
 
-// ===================== Update Delivery Status =====================
+// ------------------------------- UPDATE DELIVERY STATUS SERVICE --------------------------------------
+
 async function updateDeliveryStatusService(orderId, deliveryPartnerId, status) {
   if (!["picked", "delivered"].includes(status)) throw new Error("Invalid status");
 

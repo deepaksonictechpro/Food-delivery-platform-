@@ -1,6 +1,6 @@
 const dashboardService = require("../services/dashboard.services");
 
-// ============================= FOOD PARTNER DASHBOARD CONTROLLER ===============================
+//------------------------------- FOOD PARTNER DASHBOARD CONTROLLER --------------------------------------
 
 async function getFoodPartnerDashboard(req, res) {
   try {
@@ -12,7 +12,7 @@ async function getFoodPartnerDashboard(req, res) {
   }
 }
 
-// =============================== ADMIN DASHBOARD CONTROLLER ===================================
+//------------------------------- ADMIN DASHBOARD CONTROLLER --------------------------------------
 
 async function getAdminDashboardStats(req, res) {
   try {
@@ -24,7 +24,7 @@ async function getAdminDashboardStats(req, res) {
   }
 }
 
-// ============================ DELIVERY PARTNER DASHBOARD CONTROLLER ============================
+//------------------------------- DELIVERY PARTNER DASHBOARD CONTROLLER --------------------------------------
 
 async function getDeliveryPartnerDashboard(req, res) {
   try {

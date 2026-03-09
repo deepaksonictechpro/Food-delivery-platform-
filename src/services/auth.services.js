@@ -8,7 +8,7 @@ function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// =================================== REGISTER USER ================================================
+//------------------------------- USER REGISTRATION --------------------------------------
 
 async function registerUserService({ fullName, email, password, role }) {
   if (!fullName || !email || !password || !role)
@@ -35,7 +35,7 @@ async function registerUserService({ fullName, email, password, role }) {
   return { userId: user.id, role: user.role, otp };
 }
 
-// ===================================== VERIFY REGISTRATION OTP ======================================
+//------------------------------- VERIFY USER OTP --------------------------------------
 
 async function verifyUserOtpService(email, otp) {
   if (!email || !otp) throw new Error("Email and OTP are required");
@@ -52,7 +52,7 @@ async function verifyUserOtpService(email, otp) {
   return { userId: user.id, role: user.role };
 }
 
-// ======================================== LOGIN =====================================================
+//------------------------------- USER LOGIN --------------------------------------
 
 async function loginUserService({ email, password, role }) {
   if (!email || !password || !role)
@@ -82,7 +82,7 @@ async function loginUserService({ email, password, role }) {
   };
 }
 
-// ====================================== FORGOT PASSWORD ==========================================
+//------------------------------- FORGOT PASSWORD --------------------------------------
 
 async function forgotPasswordService(email) {
   if (!email) throw new Error("Email is required");
@@ -99,7 +99,7 @@ async function forgotPasswordService(email) {
   return { message: "OTP sent for password reset" };
 }
 
-// ================================= VERIFY FORGOT PASSWORD OTP =========================================
+//------------------------------- VERIFY FORGOT PASSWORD OTP --------------------------------------
 
 async function verifyForgotPasswordOtpService(email, otp) {
   if (!email || !otp) throw new Error("Email and OTP are required");
@@ -115,7 +115,7 @@ async function verifyForgotPasswordOtpService(email, otp) {
   return { message: "OTP verified. You can now reset password" };
 }
 
-// ===================================== RESET PASSWORD ============================================
+//------------------------------- RESET PASSWORD --------------------------------------
 
 async function resetPasswordService(email, newPassword) {
   if (!email || !newPassword) throw new Error("Email and new password are required");
@@ -133,13 +133,13 @@ async function resetPasswordService(email, newPassword) {
   return { message: "Password reset successfully" };
 }
 
-// ==================================== LOGOUT ============================================
+//------------------------------- USER LOGOUT --------------------------------------
 
 async function logoutService() {
   return { message: "User logged out successfully" };
 }
 
-// ================================== CREATE ADMIN =========================================
+//------------------------------- CREATE ADMIN (ONE TIME ONLY)--------------------------------------
 
 async function createAdminService({ fullName, email, password }) {
   if (!fullName || !email || !password) throw new Error("All fields are required");

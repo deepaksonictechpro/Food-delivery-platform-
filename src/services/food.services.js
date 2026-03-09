@@ -7,7 +7,8 @@ const { Op, Sequelize } = require("sequelize");
 const ciLike = (column, value) =>
   Sequelize.where(Sequelize.fn("LOWER", Sequelize.col(column)), { [Op.like]: `%${value.toLowerCase()}%` });
 
-// ========================== CREATE FOOD ==========================
+//------------------------------- CREATE FOOD ----------------------------------------------
+
 async function createFoodService({ name, description, category, price, file, foodPartnerId }) {
   if (!name) throw new Error("Food name is required");
   if (!category) throw new Error("Category is required");
@@ -33,7 +34,8 @@ async function createFoodService({ name, description, category, price, file, foo
   return food;
 }
 
-// ========================== GET MY FOODS ==========================
+//------------------------------- GET MY FOODS ----------------------------------------------
+
 async function getMyFoodsService(foodPartnerId) {
   const foodItems = await Food.findAll({
     where: { foodPartnerId },
@@ -43,7 +45,8 @@ async function getMyFoodsService(foodPartnerId) {
   return foodItems;
 }
 
-// ========================== GET ALL FOODS ==========================
+//------------------------------- GET ALL FOODS ----------------------------------------------
+
 async function getAllFoodsService() {
   const foods = await Food.findAll({
     include: [{ model: User, as: "foodPartner", attributes: ["id", "fullName", "email"] }],
@@ -52,7 +55,8 @@ async function getAllFoodsService() {
   return foods;
 }
 
-// ========================== LIKE FOOD ==========================
+//------------------------------- LIKE/UNLIKE FOOD ----------------------------------------------
+
 async function likeFoodService({ userId, foodId }) {
   if (!foodId) throw new Error("foodId is required");
 
@@ -68,7 +72,8 @@ async function likeFoodService({ userId, foodId }) {
   return { message: "Food liked" };
 }
 
-// ========================== SAVE FOOD ==========================
+//------------------------------- SAVE/UNSAVE FOOD ----------------------------------------------
+
 async function saveFoodService({ userId, foodId }) {
   if (!foodId) throw new Error("foodId is required");
 
@@ -84,7 +89,8 @@ async function saveFoodService({ userId, foodId }) {
   return { message: "Food saved" };
 }
 
-// ========================== GET SAVED FOODS ==========================
+//------------------------------- GET SAVED FOODS ----------------------------------------------
+
 async function getSavedFoodsService(userId) {
   const savedFoods = await Save.findAll({
     where: { userId },
@@ -98,7 +104,8 @@ async function getSavedFoodsService(userId) {
   return savedFoods;
 }
 
-// ========================== SEARCH FOODS ==========================
+//------------------------------- SEARCH FOODS ----------------------------------------------
+
 async function searchFoodsService({ query, category, partner }) {
   const foodWhere = {};
 
@@ -131,7 +138,8 @@ async function searchFoodsService({ query, category, partner }) {
   return foods;
 }
 
-// ===================== UPDATE FOOD =====================
+//------------------------------- UPDATE FOOD ----------------------------------------------
+
 async function updateFoodService(foodId, foodPartnerId, updateData, file) {
   const food = await Food.findOne({ where: { id: foodId, foodPartnerId } });
   if (!food) throw new Error("Food not found or you are not authorized");
@@ -141,7 +149,8 @@ async function updateFoodService(foodId, foodPartnerId, updateData, file) {
   return food;
 }
 
-// ===================== DELETE FOOD =====================
+//------------------------------- DELETE FOOD ----------------------------------------------
+
 async function deleteFoodService(foodId, foodPartnerId) {
   const food = await Food.findOne({ where: { id: foodId, foodPartnerId } });
   if (!food) throw new Error("Food not found or you are not authorized");

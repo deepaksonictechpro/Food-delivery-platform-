@@ -1,6 +1,7 @@
 const { DeliveryOrder, User, Food } = require("../models");
 
-// ================= USER CANCEL REQUEST =================
+//------------------------------- REQUEST CANCEL ORDER --------------------------------------
+
 const requestCancelOrderService = async (userId, orderId, reason) => {
   const order = await DeliveryOrder.findByPk(orderId);
   if (!order) throw new Error("Order not found");
@@ -17,7 +18,8 @@ const requestCancelOrderService = async (userId, orderId, reason) => {
   return order;
 };
 
-// ================= ADMIN CANCEL DECISION =================
+//------------------------------- ADMIN CANCEL DECISION --------------------------------------
+
 const handleCancelDecisionService = async (adminId, orderId, decision, adminReason) => {
   const order = await DeliveryOrder.findByPk(orderId);
   if (!order) throw new Error("Order not found");
@@ -32,7 +34,8 @@ const handleCancelDecisionService = async (adminId, orderId, decision, adminReas
   return order;
 };
 
-// ================= ADMIN: GET PENDING CANCEL REQUESTS =================
+//------------------------------- ADMIN: GET PENDING CANCEL REQUESTS --------------------------------------
+
 const getPendingCancelRequestsService = async () => {
   const orders = await DeliveryOrder.findAll({
     where: { status: "cancel_requested" },

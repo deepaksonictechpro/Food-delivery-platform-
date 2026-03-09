@@ -1,6 +1,6 @@
 const authService = require("../services/auth.services");
 
-// ======================================== REGISTER =================================================
+//-------------------------------- REGISTER -------------------------------------
 
 async function registerUser(req, res) {
   try {
@@ -14,7 +14,7 @@ async function registerUser(req, res) {
   }
 }
 
-// ==================================== VERIFY REGISTRATION OTP ====================================
+//-------------------------------- VERIFY REGISTER OTP ---------------------------
 
 async function verifyUserOtp(req, res) {
   try {
@@ -28,7 +28,7 @@ async function verifyUserOtp(req, res) {
   }
 }
 
-// ======================================== LOGIN ====================================================
+//----------------------------------------- LOGIN -------------------------------------
 
 async function loginUser(req, res) {
   try {
@@ -42,7 +42,7 @@ async function loginUser(req, res) {
   }
 }
 
-// ==================================== FORGOT PASSWORD =============================================
+//---------------------------------- FORGOT PASSWORD ---------------------------------
 
 async function forgotPassword(req, res) {
   try {
@@ -53,7 +53,7 @@ async function forgotPassword(req, res) {
   }
 }
 
-// ================================== VERIFY FORGOT PASSWORD OTP ====================================
+//--------------------------------- VERIFY FORGOT OTP ---------------------------------
 
 async function verifyForgotPasswordOtp(req, res) {
   try {
@@ -64,7 +64,7 @@ async function verifyForgotPasswordOtp(req, res) {
   }
 }
 
-// ===================================== RESET PASSWORD ===========================================
+//--------------------------------- RESET PASSWORD -------------------------------------
 
 async function resetPassword(req, res) {
   try {
@@ -75,7 +75,7 @@ async function resetPassword(req, res) {
   }
 }
 
-// ==================================== LOGOUT ============================================
+//---------------------------------------- LOGOUT ---------------------------------------
 
 async function logoutUser(req, res) {
   try {
@@ -86,7 +86,7 @@ async function logoutUser(req, res) {
   }
 }
 
-// ==================================== CREATE ADMIN =======================================
+//---------------------------------- CREATE ADMIN ---------------------------------------
 
 async function createAdmin(req, res) {
   try {

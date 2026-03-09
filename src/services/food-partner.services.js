@@ -1,6 +1,6 @@
 const { DeliveryOrder, Food, User } = require("../models");
 
-// ==================================== FOOD PARTNER FIND BY ID =========================================
+//------------------------------- FOOD PARTNER FIND BY ID --------------------------------------
 
 async function fetchFoodPartnerById(id) {
   const fp = await User.findOne({
@@ -28,7 +28,7 @@ async function fetchFoodPartnerById(id) {
   return { ...fp.toJSON(), foods };
 }
 
-// =============================== GET FOOD PARTNER ORDER HISTORY ==================================
+//------------------------------- GET FOOD PARTNER ORDER HISTORY --------------------------------------
 
 async function getFoodOrdersService(foodPartnerId) {
   // Get all foods of this partner

@@ -1,7 +1,7 @@
 const { User, Food, DeliveryOrder } = require("../models");
 const { Op, Sequelize } = require("sequelize");
 
-// ================================== FOOD PARTNER DASHBOARD SERVICE ==================================
+//------------------------------- FOOD PARTNER DASHBOARD SERVICE --------------------------------------
 
 async function fetchFoodPartnerDashboard(foodPartnerId) {
   // Total orders
@@ -57,7 +57,7 @@ async function fetchFoodPartnerDashboard(foodPartnerId) {
   return { totalOrders, totalRevenue, totalFoods, bestSellingFoods };
 }
 
-// =================================== ADMIN DASHBOARD SERVICE ========================================
+//------------------------------- ADMIN DASHBOARD SERVICE --------------------------------------
 
 async function fetchAdminDashboardStats() {
   const [
@@ -77,7 +77,7 @@ async function fetchAdminDashboardStats() {
   return { totalUsers, totalFoods, foodPartners, deliveryPartners, totalOrders };
 }
 
-// ================================ DELIVERY PARTNER DASHBOARD SERVICE =================================
+//------------------------------- DELIVERY PARTNER DASHBOARD SERVICE --------------------------------------
 
 async function fetchDeliveryPartnerDashboard(deliveryPartnerId) {
   // Total deliveries

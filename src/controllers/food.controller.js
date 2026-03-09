@@ -1,7 +1,7 @@
 const foodService = require("../services/food.services");
 const { getFoodOrdersService } = require("../services/food-partner.services");
 
-// =================================== CREATE FOOD ===========================================
+//------------------------------------ CREATE FOOD ----------------------------------------------
 
 async function createFood(req, res) {
   try {
@@ -16,7 +16,7 @@ async function createFood(req, res) {
   }
 }
 
-// ======================================== GET MY FOODS =========================================
+//------------------------------- GET MY FOODS ----------------------------------------------
 
 async function getMyFoods(req, res) {
   try {
@@ -27,7 +27,7 @@ async function getMyFoods(req, res) {
   }
 }
 
-// ======================================== GET ALL FOODS =========================================
+//------------------------------- GET ALL FOODS ----------------------------------------------
 
 async function getAllFoods(req, res) {
   try {
@@ -38,7 +38,7 @@ async function getAllFoods(req, res) {
   }
 }
 
-// ========================================= LIKE FOOD ============================================
+//------------------------------- LIKE/UNLIKE FOOD ----------------------------------------------
 
 async function likeFood(req, res) {
   try {
@@ -49,7 +49,7 @@ async function likeFood(req, res) {
   }
 }
 
-// ====================================== SAVE FOOD ================================================
+//------------------------------- SAVE/UNSAVE FOOD ----------------------------------------------
 
 async function saveFood(req, res) {
   try {
@@ -60,7 +60,7 @@ async function saveFood(req, res) {
   }
 }
 
-// ======================================== GET SAVED FOODS ====================================
+//------------------------------- GET SAVED FOODS ----------------------------------------------
 
 async function getSavedFoods(req, res) {
   try {
@@ -71,7 +71,7 @@ async function getSavedFoods(req, res) {
   }
 }
 
-// ======================================= SEARCH FOODS =========================================
+//------------------------------- SEARCH FOODS ----------------------------------------------
 
 async function searchFoods(req, res) {
   try {
@@ -83,7 +83,7 @@ async function searchFoods(req, res) {
 }
 
 
-// =================================== UPDATE FOOD ==========================================
+//------------------------------- UPDATE FOOD ----------------------------------------------
 async function updateFood(req, res) {
   try {
     const foodId = req.params.id;
@@ -94,7 +94,7 @@ async function updateFood(req, res) {
   }
 }
 
-// =================================== DELETE FOOD ==========================================
+//------------------------------- DELETE FOOD ----------------------------------------------
 async function deleteFood(req, res) {
   try {
     const foodId = req.params.id;
@@ -105,7 +105,7 @@ async function deleteFood(req, res) {
   }
 }
 
-// =================================== GET FOOD ORDERS ======================================
+//------------------------------- GET FOOD ORDERS --------------------------------------
 async function getFoodOrders(req, res) {
   try {
     const orders = await getFoodOrdersService(req.user.id);

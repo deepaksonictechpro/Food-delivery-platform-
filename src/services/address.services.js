@@ -1,12 +1,12 @@
 const { Address } = require("../models");
 
-// ================= Add New Address =================
+//--------------------------------- ADD NEW ADDRESS --------------------------------------
 async function addAddressService(userId, data) {
   const address = await Address.create({ ...data, userId });
   return address;
 }
 
-// ================= Get All User Addresses =================
+//------------------------------- GET USER ADDRESSES --------------------------------------
 async function getUserAddressesService(userId) {
   return Address.findAll({
     where: { userId },
@@ -14,7 +14,7 @@ async function getUserAddressesService(userId) {
   });
 }
 
-// ================= Update Address =================
+//------------------------------- UPDATE ADDRESS --------------------------------------
 async function updateAddressService(userId, addressId, data) {
   const address = await Address.findOne({ where: { id: addressId, userId } });
   if (!address) throw new Error("Address not found");
@@ -24,7 +24,7 @@ async function updateAddressService(userId, addressId, data) {
   return address;
 }
 
-// ================= Delete Address =================
+//------------------------------- DELETE ADDRESS --------------------------------------
 async function deleteAddressService(userId, addressId) {
   const address = await Address.findOne({ where: { id: addressId, userId } });
   if (!address) throw new Error("Address not found");
