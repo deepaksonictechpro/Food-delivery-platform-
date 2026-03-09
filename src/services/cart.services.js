@@ -15,21 +15,31 @@ async function addToCartService(userId, foodId, quantity) {
 
 // ================= GET CART =================
 async function getCartService(userId) {
-  return Cart.findAll({
+  const cartItems = await Cart.findAll({
     where: { userId },
     include: ["food"],
   });
+
+  // Map to plain objects so foodId & quantity are directly accessible
+  return cartItems.map(item => ({
+    foodId: item.foodId,
+    quantity: item.quantity,
+    food: item.food ? {
+      id: item.food.id,
+      name: item.food.name,
+      description: item.food.description,
+      category: item.food.category,
+      price: item.food.price,
+      video: item.food.video,
+    } : null,
+  }));
 }
 
-// ================= UPDATE CART (FIXED) =================
+// ================= UPDATE CART =================
 async function updateCartItemService(userId, foodId, quantity) {
-  const cartItem = await Cart.findOne({
-    where: { userId, foodId },
-  });
+  const cartItem = await Cart.findOne({ where: { userId, foodId } });
 
-  if (!cartItem) {
-    throw new Error("Item not found in cart");
-  }
+  if (!cartItem) throw new Error("Item not found in cart");
 
   cartItem.quantity = quantity;
   await cartItem.save();

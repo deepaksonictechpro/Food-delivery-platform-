@@ -1,4 +1,3 @@
-// src/routes/deliveryPartner.routes.js
 const express = require("express");
 const router = express.Router();
 
@@ -14,14 +13,14 @@ const {
   authRoleMiddleware,
 } = require("../middlewares/auth.middleware");
 
-/* ========================= USER DELIVERY APIS ========================= */
+/* ========================= USER DELIVERY API ========================= */
 
-// User places order
+// Unified: Place order from cart
 router.post(
-  "/",
+  "/order",
   authUserMiddleware,
   authRoleMiddleware(["user"]),
-  validate(placeOrderSchema), // ✅ Joi validation
+  validate(placeOrderSchema), 
   deliveryController.placeOrder
 );
 
@@ -64,7 +63,7 @@ router.patch(
   "/:id/status",
   authUserMiddleware,
   authRoleMiddleware(["delivery_partner"]),
-  validate(updateDeliveryStatusSchema), // ✅ Joi validation
+  validate(updateDeliveryStatusSchema),
   deliveryController.updateDeliveryStatus
 );
 
