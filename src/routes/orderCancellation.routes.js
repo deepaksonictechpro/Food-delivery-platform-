@@ -9,7 +9,8 @@ const validate = require("../middlewares/validate.middleware");
 const { cancelRequestSchema, cancelDecisionSchema } = require("../validations/orderCancellation.validation");
 const { authUserMiddleware, authRoleMiddleware } = require("../middlewares/auth.middleware");
 
-// ================= USER =================
+// --------------------------------- USER REQUESTS ORDER CANCELLATION --------------------------------
+
 router.post(
   "/:orderId/cancel-request",
   authUserMiddleware,
@@ -18,13 +19,16 @@ router.post(
   requestCancelOrder
 );
 
-// ================= ADMIN =================
+// -------------------------------- ADMIN VIEWS PENDING CANCELLATION REQUESTS ---------------------
+
 router.get(
   "/pending-requests",
   authUserMiddleware,
   authRoleMiddleware(["admin"]),
   getPendingCancelRequests
 );
+
+// -------------------------------- ADMIN HANDLES CANCELLATION DECISION -----------------------------
 
 router.patch(
   "/:orderId/cancel-decision",

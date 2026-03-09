@@ -5,7 +5,8 @@ const validate = require("../middlewares/validate.middleware");
 const { authUserMiddleware, authRoleMiddleware } = require("../middlewares/auth.middleware");
 const { addToCartSchema, updateCartSchema, removeFromCartSchema } = require("../validations/cart.validation");
 
-// Add item to cart
+// ----------------------------------Add item to cart----------------------------------------
+
 router.post(
   "/add",
   authUserMiddleware,
@@ -14,7 +15,8 @@ router.post(
   cartController.addToCart
 );
 
-// Get user's cart
+// -------------------------------------- Get user's cart------------------------------------
+
 router.get(
     "/view-cart", 
     authUserMiddleware, 
@@ -22,7 +24,8 @@ router.get(
     cartController.getCart
 );
 
-// Update cart item quantity
+// ------------------------------------ Update cart item quantity --------------------------------
+
 router.patch(
   "/:foodId/update",
   authUserMiddleware,
@@ -31,7 +34,8 @@ router.patch(
   cartController.updateCartItem
 );
 
-// Remove item from cart
+// ------------------------------------- Remove item from cart -------------------------------------
+
 router.delete(
   "/:foodId/remove",
   authUserMiddleware,
@@ -39,5 +43,7 @@ router.delete(
   validate(removeFromCartSchema, "params"),
   cartController.removeCartItem
 );
+
+
 
 module.exports = router;

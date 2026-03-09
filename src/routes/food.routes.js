@@ -13,17 +13,20 @@ const {
 const router = express.Router();
 const upload = multer();
 
-// ====================================== PUBLIC SEARCH =======================================\
+// ------------------------------- PUBLIC FOOD ENDPOINTS ------------------------------------
 
 router.get("/search", validate(searchFoodSchema, "query"), foodController.searchFoods);
 
-// ============================== FOOD PARTNER ==============================
+// ------------------------------ Get food partner's own foods --------------------------------
+
 router.get(
   "/mine",
   authUserMiddleware,
   authRoleMiddleware(["food_partner"]),
   foodController.getMyFoods
 );
+
+// ------------------------------ Create new food item by food partner -------------------------
 
 router.post(
   "/",
@@ -34,13 +37,16 @@ router.post(
   foodController.createFood
 );
 
-// ============================== USER ==============================
+// ------------------------------------- LIKE/ INLIKE FOOD BY USER -------------------------------
+
 router.post(
   "/like",
   authUserMiddleware,
   validate(foodActionSchema),
   foodController.likeFood
 );
+
+// ------------------------------------- SAVE/ UNSAVE FOOD BY USER -------------------------------
 
 router.post(
   "/save",
@@ -49,10 +55,14 @@ router.post(
   foodController.saveFood
 );
 
+// ------------------------------------- GET USER'S SAVED FOODS -------------------------------
+
 router.get(
   "/saved",
   authUserMiddleware,
   foodController.getSavedFoods
 );
+
+
 
 module.exports = router;

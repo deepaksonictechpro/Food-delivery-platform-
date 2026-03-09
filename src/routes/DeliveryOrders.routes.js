@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-
 const deliveryController = require("../controllers/DeliveryOrders.controller");
 const validate = require("../middlewares/validate.middleware");
 const {
@@ -13,9 +12,10 @@ const {
   authRoleMiddleware,
 } = require("../middlewares/auth.middleware");
 
-/* ========================= USER DELIVERY API ========================= */
+// ===================================== USER DELIVERY API ===========================================
 
-// Unified: Place order from cart
+//----------------------------------- Place order from cart -----------------------------------------
+
 router.post(
   "/order",
   authUserMiddleware,
@@ -24,7 +24,8 @@ router.post(
   deliveryController.placeOrder
 );
 
-// User sees own orders
+//----------------------------------------- User sees own orders -------------------------------
+
 router.get(
   "/my-orders",
   authUserMiddleware,
@@ -32,9 +33,10 @@ router.get(
   deliveryController.getUserOrders
 );
 
-/* ====================== DELIVERY PARTNER APIS ========================= */
+//================================= DELIVERY PARTNER APIS ======================================
 
-// Get all available (unassigned) orders
+// ---------------------------Get all available (unassigned) orders-----------------------------
+
 router.get(
   "/available",
   authUserMiddleware,
@@ -42,7 +44,8 @@ router.get(
   deliveryController.getAvailableOrders
 );
 
-// Accept an order
+// ----------------------------------------Accept an order--------------------------------------
+
 router.post(
   "/:id/accept",
   authUserMiddleware,
@@ -50,7 +53,8 @@ router.post(
   deliveryController.acceptOrder
 );
 
-// Get assigned deliveries
+// ----------------------------------------Get assigned deliveries------------------------------
+
 router.get(
   "/assigned",
   authUserMiddleware,
@@ -58,7 +62,8 @@ router.get(
   deliveryController.getAssignedDeliveries
 );
 
-// Update delivery status (picked / delivered)
+// ----------------------Update delivery status (picked / delivered)----------------------------
+
 router.patch(
   "/:id/status",
   authUserMiddleware,

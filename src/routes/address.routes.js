@@ -7,9 +7,10 @@ const { createAddressSchema, updateAddressSchema } = require("../validations/add
 
 const { authUserMiddleware, authRoleMiddleware } = require("../middlewares/auth.middleware");
 
-// ================= User Address APIs =================
+// ====================================== User Address APIs ===================================
 
-// Add new address
+//--------------------------------------- Add new address -------------------------------------
+
 router.post(
   "/add-new-address",
   authUserMiddleware,
@@ -18,7 +19,8 @@ router.post(
   addressController.addAddress
 );
 
-// Get user addresses
+// ---------------------------------- Get user addresses --------------------------------------
+
 router.get(
   "/get-address",
   authUserMiddleware,
@@ -26,7 +28,8 @@ router.get(
   addressController.getUserAddresses
 );
 
-// Update address
+// --------------------------------------- Update address -------------------------------------
+
 router.patch(
   "/:id",
   authUserMiddleware,
@@ -35,12 +38,15 @@ router.patch(
   addressController.updateAddress
 );
 
-// Delete address
+// ------------------------------------- Delete address ---------------------------------------
+
 router.delete(
   "/:id",
   authUserMiddleware,
   authRoleMiddleware(["user"]),
   addressController.deleteAddress
 );
+
+
 
 module.exports = router;

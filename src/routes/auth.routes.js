@@ -14,56 +14,67 @@ const {
 
 const router = express.Router();
 
-// ================= REGISTER =================
+//--------------------------------- REGISTER ------------------------------------
+
 router.post(
   "/register",
   validate(registerSchema),
   authController.registerUser
 );
 
-// ================= VERIFY REGISTER OTP =================
+// -------------------------------- VERIFY REGISTER OTP -------------------------
+
 router.post(
   "/verify-otp",
   validate(verifyOtpSchema),
   authController.verifyUserOtp
 );
 
-// ================= LOGIN =================
+//----------------------------------- LOGIN --------------------------------------
+
 router.post(
   "/login",
   validate(loginSchema),
   authController.loginUser
 );
 
-// ================= FORGOT PASSWORD =================
+// ---------------------------------- FORGOT PASSWORD ---------------------------------
+
 router.post(
   "/forgot-password",
   validate(forgotPasswordSchema),
   authController.forgotPassword
 );
 
-// ================= VERIFY FORGOT OTP =================
+// --------------------------------- VERIFY FORGOT OTP ---------------------------------
+
 router.post(
   "/forgot-password/verify-otp",
   validate(verifyForgotOtpSchema),
   authController.verifyForgotPasswordOtp
 );
 
-// ================= RESET PASSWORD =================
+// --------------------------------- RESET PASSWORD -------------------------------------
+
 router.post(
   "/reset-password",
   validate(resetPasswordSchema),
   authController.resetPassword
 );
 
-// ================= LOGOUT =================
-router.post("/logout", authController.logoutUser);
+// ---------------------------------- LOGOUT ---------------------------------------------
 
-// ================= CREATE ADMIN =================
+router.post("/logout", 
+  authController.logoutUser
+);
+
+// ---------------------------------- CREATE ADMIN ---------------------------------------
+
 router.post(
   "/create-admin",
   validate(createAdminSchema),
   authController.createAdmin
 );
+
 
 module.exports = router;
