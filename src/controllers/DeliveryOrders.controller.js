@@ -1,75 +1,89 @@
+// src/controllers/DeliveryOrders.controller.js
 const deliveryService = require("../services/DeliveryOrders.services");
+const { getCartService } = require("../services/cart.services");
 
-//================================= USER places order ===================================
-
+// ===================== Place Order from Cart =====================
 const placeOrder = async (req, res) => {
   try {
-    const { foodId, quantity, address, paymentMethod } = req.body;
-    const order = await deliveryService.placeOrderService(req.user.id, foodId, quantity, address, paymentMethod);
-    return res.status(201).json({ message: "Order placed", order });
+    const { address, paymentMethod } = req.body;
+
+    // Fetch user's cart
+    const cartItems = await getCartService(req.user.id);
+
+    if (!cartItems || cartItems.length === 0) {
+      return res.status(400).json({ message: "Cart is empty" });
+    }
+
+    const orders = await deliveryService.placeOrderService(
+      req.user.id,
+      cartItems,
+      address,
+      paymentMethod
+    );
+
+    res.status(201).json({ message: "Order placed successfully", orders });
   } catch (err) {
-    console.error(err.message);
-    return res.status(500).json({ message: err.message || "Server error" });
+    console.error("PLACE ORDER ERROR:", err.message);
+    res.status(500).json({ message: err.message });
   }
 };
 
-// ================================== USER: my orders ===================================
-
+// ===================== Get User Orders =====================
 const getUserOrders = async (req, res) => {
   try {
     const orders = await deliveryService.getUserOrdersService(req.user.id);
-    return res.status(200).json({ orders });
+    res.status(200).json({ orders });
   } catch (err) {
     console.error(err.message);
-    return res.status(500).json({ message: err.message || "Server error" });
+    res.status(500).json({ message: err.message });
   }
 };
 
-//=========================== DELIVERY PARTNER: available orders ============================
-
+// ===================== Delivery Partner: Available Orders =====================
 const getAvailableOrders = async (req, res) => {
   try {
     const orders = await deliveryService.getAvailableOrdersService();
-    return res.status(200).json({ orders });
+    res.status(200).json({ orders });
   } catch (err) {
     console.error(err.message);
-    return res.status(500).json({ message: err.message || "Server error" });
+    res.status(500).json({ message: err.message });
   }
 };
 
-//=========================== DELIVERY PARTNER: accept order ===========================
-
+// ===================== Delivery Partner: Accept Order =====================
 const acceptOrder = async (req, res) => {
   try {
     const order = await deliveryService.acceptOrderService(req.params.id, req.user.id);
-    return res.status(200).json({ message: "Order assigned successfully", order });
+    res.status(200).json({ message: "Order assigned successfully", order });
   } catch (err) {
     console.error(err.message);
-    return res.status(500).json({ message: err.message || "Server error" });
+    res.status(500).json({ message: err.message });
   }
 };
 
-//============================= DELIVERY PARTNER: assigned orders ===========================
-
+// ===================== Delivery Partner: Assigned Orders =====================
 const getAssignedDeliveries = async (req, res) => {
   try {
     const orders = await deliveryService.getAssignedDeliveriesService(req.user.id);
-    return res.status(200).json({ orders });
+    res.status(200).json({ orders });
   } catch (err) {
     console.error(err.message);
-    return res.status(500).json({ message: err.message || "Server error" });
+    res.status(500).json({ message: err.message });
   }
 };
 
-//============================= DELIVERY PARTNER: update status ==============================
-
+// ===================== Delivery Partner: Update Status =====================
 const updateDeliveryStatus = async (req, res) => {
   try {
-    const order = await deliveryService.updateDeliveryStatusService(req.params.id, req.user.id, req.body.status);
-    return res.status(200).json({ message: "Status updated", order });
+    const order = await deliveryService.updateDeliveryStatusService(
+      req.params.id,
+      req.user.id,
+      req.body.status
+    );
+    res.status(200).json({ message: "Status updated", order });
   } catch (err) {
     console.error(err.message);
-    return res.status(500).json({ message: err.message || "Server error" });
+    res.status(500).json({ message: err.message });
   }
 };
 
