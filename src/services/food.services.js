@@ -131,6 +131,25 @@ async function searchFoodsService({ query, category, partner }) {
   return foods;
 }
 
+// ===================== UPDATE FOOD =====================
+async function updateFoodService(foodId, foodPartnerId, updateData, file) {
+  const food = await Food.findOne({ where: { id: foodId, foodPartnerId } });
+  if (!food) throw new Error("Food not found or you are not authorized");
+
+  if (file) updateData.file = file;
+  await food.update(updateData);
+  return food;
+}
+
+// ===================== DELETE FOOD =====================
+async function deleteFoodService(foodId, foodPartnerId) {
+  const food = await Food.findOne({ where: { id: foodId, foodPartnerId } });
+  if (!food) throw new Error("Food not found or you are not authorized");
+
+  await food.destroy();
+  return true;
+}
+
 module.exports = {
   createFoodService,
   getMyFoodsService,
@@ -139,4 +158,6 @@ module.exports = {
   saveFoodService,
   getSavedFoodsService,
   searchFoodsService,
+  updateFoodService,
+  deleteFoodService,
 };

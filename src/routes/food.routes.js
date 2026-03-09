@@ -11,7 +11,7 @@ const {
 } = require("../validations/food.validation");
 
 const router = express.Router();
-const upload = multer(); // memory storage
+const upload = multer();
 
 // ====================================== PUBLIC SEARCH =======================================\
 

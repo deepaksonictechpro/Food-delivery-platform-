@@ -1,4 +1,5 @@
 const foodService = require("../services/food.services");
+const { getFoodOrdersService } = require("../services/food-partner.services");
 
 // =================================== CREATE FOOD ===========================================
 
@@ -81,6 +82,39 @@ async function searchFoods(req, res) {
   }
 }
 
+
+// =================================== UPDATE FOOD ==========================================
+async function updateFood(req, res) {
+  try {
+    const foodId = req.params.id;
+    const updatedFood = await foodService.updateFoodService(foodId, req.user.id, req.body, req.file);
+    res.status(200).json({ message: "Food updated successfully", food: updatedFood });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+}
+
+// =================================== DELETE FOOD ==========================================
+async function deleteFood(req, res) {
+  try {
+    const foodId = req.params.id;
+    await foodService.deleteFoodService(foodId, req.user.id);
+    res.status(200).json({ message: "Food deleted successfully" });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+}
+
+// =================================== GET FOOD ORDERS ======================================
+async function getFoodOrders(req, res) {
+  try {
+    const orders = await getFoodOrdersService(req.user.id);
+    res.status(200).json({ message: "Food orders fetched successfully", count: orders.length, orders });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
 module.exports = {
   createFood,
   getMyFoods,
@@ -89,4 +123,7 @@ module.exports = {
   saveFood,
   getSavedFoods,
   searchFoods,
+  updateFood,
+  deleteFood,
+  getFoodOrders,
 };
