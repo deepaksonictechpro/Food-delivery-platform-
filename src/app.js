@@ -15,6 +15,7 @@ const adminRoutes = require("./routes/admin.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const ordercancelRoutes = require("./routes/orderCancellation.routes");
 const cardRoutes = require("./routes/cart.routes");
+const addressRoutes = require("./routes/address.routes");
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/delivery", deliveryPartnerRoutes);
 app.use("/api/placeOrder", ordercancelRoutes);
 app.use("/api/card", cardRoutes);
+app.use("/api/address", addressRoutes);
 
 // ====== Dashboard Routes ======
 app.use("/api/dashboard", dashboardRoutes);
