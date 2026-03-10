@@ -27,7 +27,6 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   User.associate = (models) => {
-    // Likes & Saves
     if (models.Like) User.hasMany(models.Like, { foreignKey: "userId", constraints: false });
     if (models.Save) User.hasMany(models.Save, { foreignKey: "userId", constraints: false });
 

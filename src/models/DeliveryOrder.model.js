@@ -27,13 +27,14 @@ module.exports = (sequelize, DataTypes) => {
     },
     status: {
       type: DataTypes.ENUM(
-        "pending",
-        "picked",
-        "delivered",
-        "cancel_requested",
-        "cancelled"
+      "pending",
+      "accepted",
+      "picked_up",
+      "delivered",
+      "cancel_requested",
+      "cancelled"
       ),
-      defaultValue: "pending",
+    defaultValue: "pending",
     },
     paymentMethod: {
       type: DataTypes.STRING,

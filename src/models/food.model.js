@@ -31,7 +31,7 @@ module.exports = (sequelize, DataTypes) => {
 
       video: {
         type: DataTypes.STRING,
-        allowNull: false,  // Optional: true if you want video optional
+        allowNull: false, 
       },
 
       likeCount: {
@@ -55,11 +55,9 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
-  // =====================
-  // Associations
-  // =====================
+  // ===================== Associations =====================
+
   Food.associate = (models) => {
-    // Food partner (user)
     Food.belongsTo(models.User, {
       foreignKey: "foodPartnerId",
       as: "foodPartner",

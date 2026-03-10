@@ -14,15 +14,11 @@ const {
 
 const router = express.Router();
 
-//--------------------------------- REGISTER ------------------------------------
-
 router.post(
   "/register",
   validate(registerSchema),
   authController.registerUser
 );
-
-// -------------------------------- VERIFY REGISTER OTP -------------------------
 
 router.post(
   "/verify-otp",
@@ -30,15 +26,11 @@ router.post(
   authController.verifyUserOtp
 );
 
-//----------------------------------- LOGIN --------------------------------------
-
 router.post(
   "/login",
   validate(loginSchema),
   authController.loginUser
 );
-
-// ---------------------------------- FORGOT PASSWORD ---------------------------------
 
 router.post(
   "/forgot-password",
@@ -46,23 +38,17 @@ router.post(
   authController.forgotPassword
 );
 
-// --------------------------------- VERIFY FORGOT OTP ---------------------------------
-
 router.post(
   "/forgot-password/verify-otp",
   validate(verifyForgotOtpSchema),
   authController.verifyForgotPasswordOtp
 );
 
-// --------------------------------- RESET PASSWORD -------------------------------------
-
 router.post(
   "/reset-password",
   validate(resetPasswordSchema),
   authController.resetPassword
 );
-
-// ---------------------------------- LOGOUT ---------------------------------------------
 
 router.post("/logout", 
   authController.logoutUser
