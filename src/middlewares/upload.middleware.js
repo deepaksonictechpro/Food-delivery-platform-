@@ -1,28 +1,32 @@
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
-// Storage config
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/admin/"); // folder jahan images save hongi
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Factory to create storage for any folder
+const getStorage = (folderName) =>
+  multer.diskStorage({
+    destination: (req, file, cb) => {
+      const dir = `uploads/${folderName}`;
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname); // keep extension
+      const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9) + ext;
+      cb(null, uniqueName);
+    },
+  });
 
-// File filter (only images)
+// File filter (images only)
 const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|gif/;
   const ext = path.extname(file.originalname).toLowerCase();
-  if (allowedTypes.test(ext)) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only images are allowed"));
-  }
+  if (allowedTypes.test(ext)) cb(null, true);
+  else cb(new Error("Only images are allowed"));
 };
 
-const upload = multer({ storage, fileFilter });
+// Export separate uploaders
+const adminUpload = multer({ storage: getStorage("admin"), fileFilter });
+const foodPartnerUpload = multer({ storage: getStorage("food_partner"), fileFilter });
 
-module.exports = upload;
+module.exports = { adminUpload, foodPartnerUpload };

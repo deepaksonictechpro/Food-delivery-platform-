@@ -1,49 +1,20 @@
-// src/routes/food-partner.routes.js
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
-const upload = multer();
-
+const { authUserMiddleware, authRoleMiddleware } = require("../middlewares/auth.middleware");
+const { foodPartnerUpload } = require("../middlewares/upload.middleware");
 const foodPartnerController = require("../controllers/food-partner.controller");
 const validate = require("../middlewares/validate.middleware");
 const { foodPartnerIdParamSchema } = require("../validations/food-partner.validation");
 const foodController = require("../controllers/food.controller");
-const { authUserMiddleware, authRoleMiddleware } = require("../middlewares/auth.middleware");
 
-//--------------------------------- GET FOOD PARTNER INFO --------------------------------------------
+// Existing food CRUD routes
+router.get("/:id/food-partner-info", authUserMiddleware, validate(foodPartnerIdParamSchema, "params"), foodPartnerController.getFoodPartnerById);
+router.put("/update-food/:id", authUserMiddleware, authRoleMiddleware(["food_partner"]), foodController.updateFood);
+router.delete("/delete-food/:id", authUserMiddleware, authRoleMiddleware(["food_partner"]), foodController.deleteFood);
+router.get("/orders-history", authUserMiddleware, authRoleMiddleware(["food_partner"]), foodController.getFoodOrders);
 
-router.get(
-  "/:id/food-partner-info",
-  authUserMiddleware,
-  validate(foodPartnerIdParamSchema, "params"),
-  foodPartnerController.getFoodPartnerById
-);
-
-//------------------------------ UPDATE FOOD BY FOOD PARTNER ------------------------------------------
-
-router.put(
-  "/update-food/:id",
-  authUserMiddleware,
-  authRoleMiddleware(["food_partner"]),
-  upload.single("video"),
-  foodController.updateFood
-);
-
-//------------------------------ DELETE FOOD BY FOOD PARTNER ------------------------------------------
-
-router.delete(
-  "/delete-food/:id",
-  authUserMiddleware,
-  authRoleMiddleware(["food_partner"]),
-  foodController.deleteFood
-);
-
-//------------------------------ GET FOOD ORDERS HISTORY BY FOOD PARTNER -------------------------------
-
-router.get("/orders-history", 
-  authUserMiddleware, 
-  authRoleMiddleware(["food_partner"]), 
-  foodController.getFoodOrders
-);
+// ===== Food Partner Profile =====
+router.get("/profile", authUserMiddleware, authRoleMiddleware(["food_partner"]), foodPartnerController.getFoodPartnerProfile);
+router.put("/profile", authUserMiddleware, authRoleMiddleware(["food_partner"]), foodPartnerUpload.single("profileImage"), foodPartnerController.updateFoodPartnerProfile);
 
 module.exports = router;
