@@ -1,7 +1,9 @@
+// app.js
 require("dotenv").config();
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const path = require("path");
 
 const db = require("./models"); 
 const sequelize = db.sequelize;
@@ -26,6 +28,9 @@ app.use(cors({
 }));
 app.use(cookieParser());
 app.use(express.json());
+
+// ====== Serve Uploaded Files ======
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ====== Test Route ======
 app.get("/", (req, res) => res.send("API running"));

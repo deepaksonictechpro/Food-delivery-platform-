@@ -1,7 +1,5 @@
 const { User, Food } = require("../models");
 
-// ======================================= ADMIN SERVICE ===============================================
-
 //--------------------------------------- Get all users ---------------------------------------------
 
 async function fetchAllUsers() {
@@ -45,9 +43,47 @@ async function fetchAllDeliveryPartners() {
   return partners;
 }
 
+//--------------------------------------- Get admin profile --------------------------------------------
+
+async function fetchAdminProfile(adminId) {
+  const admin = await User.findOne({
+    where: { id: adminId, role: "admin" },
+    attributes: ["id", "fullName", "email", "role", "profileImage", "status"]
+  });
+
+  if (!admin) throw new Error("Admin not found");
+  return admin;
+}
+
+//--------------------------------------- Update admin profile ------------------------------------------
+
+async function updateAdminProfile(adminId, data) {
+  const admin = await User.findOne({ where: { id: adminId, role: "admin" } });
+  if (!admin) throw new Error("Admin not found");
+
+  await admin.update({
+    fullName: data.fullName || admin.fullName,
+    email: data.email || admin.email,
+    profileImage: data.profileImage || admin.profileImage,
+    status: data.status || admin.status
+  });
+
+  return {
+    id: admin.id,
+    fullName: admin.fullName,
+    email: admin.email,
+    role: admin.role,
+    profileImage: admin.profileImage,
+    status: admin.status
+  };
+}
+
+
 module.exports = {
   fetchAllUsers,
   fetchAllFoods,
   fetchAllFoodPartners,
   fetchAllDeliveryPartners,
+  fetchAdminProfile,
+  updateAdminProfile,
 };

@@ -1,7 +1,7 @@
-// src/controllers/cart.controller.js
 const cartService = require("../services/cart.services");
 
 //-------------------------------- ADD TO CART --------------------------------------
+
 async function addToCart(req, res) {
   try {
     const { foodId, quantity } = req.body;
@@ -23,6 +23,7 @@ async function addToCart(req, res) {
 }
 
 //------------------------------ GET USER'S CART --------------------------------------
+
 async function getCart(req, res) {
   try {
     const cartItems = await cartService.getCartService(req.user.id);
@@ -38,6 +39,7 @@ async function getCart(req, res) {
 }
 
 //------------------------------ UPDATE CART ITEM QUANTITY --------------------------------------
+
 async function updateCartItem(req, res) {
   try {
     const foodId = Number(req.params.foodId);
@@ -60,6 +62,7 @@ async function updateCartItem(req, res) {
 }
 
 //------------------------------ REMOVE ITEM FROM CART --------------------------------------
+
 async function removeCartItem(req, res) {
   try {
     const foodId = parseInt(req.params.foodId);

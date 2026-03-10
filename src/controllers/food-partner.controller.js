@@ -1,6 +1,6 @@
 const foodPartnerService = require("../services/food-partner.services");
 
-//------------------------------- FOOD PARTNER DASHBOARD CONTROLLER --------------------------------------
+//------------------------------- GET FOOD PARTNER BY ID --------------------------------------
 
 async function getFoodPartnerById(req, res) {
   try {

@@ -64,9 +64,53 @@ async function getAllDeliveryPartners(req, res) {
   }
 }
 
+//--------------------------------------- Get admin profile ---------------------------------------------
+
+async function getAdminProfile(req, res) {
+  try {
+    const adminId = req.user.id;
+    const admin = await adminService.fetchAdminProfile(adminId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Admin profile fetched successfully",
+      data: admin
+    });
+  } catch (error) {
+    console.error("GET ADMIN PROFILE ERROR:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+
+//--------------------------------------- Update admin profile ---------------------------------------------
+
+async function updateAdminProfile(req, res) {
+  try {
+    const adminId = req.user.id;
+    const data = { ...req.body };
+
+    // If profile image uploaded via multer
+    if (req.file) data.profileImage = req.file.path;
+
+    const admin = await adminService.updateAdminProfile(adminId, data);
+
+    return res.status(200).json({
+      success: true,
+      message: "Admin profile updated successfully",
+      data: admin
+    });
+  } catch (error) {
+    console.error("UPDATE ADMIN PROFILE ERROR:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
 module.exports = {
   getAllUsers,
   getAllFoods,
   getAllFoodPartners,
   getAllDeliveryPartners,
+  getAdminProfile,
+  updateAdminProfile,
 };

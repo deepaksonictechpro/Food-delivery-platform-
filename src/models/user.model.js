@@ -15,7 +15,9 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "user"
       },
       forgotPasswordOtp: { type: DataTypes.STRING },
-      isForgotOtpVerified: { type: DataTypes.BOOLEAN, defaultValue: false }
+      isForgotOtpVerified: { type: DataTypes.BOOLEAN, defaultValue: false },
+      profileImage: { type: DataTypes.STRING, allowNull: true },
+      status: { type: DataTypes.ENUM("active","inactive"), defaultValue: "active" },
     }
   );
 

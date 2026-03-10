@@ -1,8 +1,8 @@
-// src/controllers/DeliveryOrders.controller.js
 const deliveryService = require("../services/DeliveryOrders.services");
 const { getCartService } = require("../services/cart.services");
 
 //------------------------------- PLACE ORDER FROM CART --------------------------------------
+
 const placeOrder = async (req, res) => {
   try {
     const { address, paymentMethod } = req.body;
@@ -29,6 +29,7 @@ const placeOrder = async (req, res) => {
 };
 
 //------------------------------- GET USER ORDERS --------------------------------------
+
 const getUserOrders = async (req, res) => {
   try {
     const orders = await deliveryService.getUserOrdersService(req.user.id);
@@ -39,7 +40,8 @@ const getUserOrders = async (req, res) => {
   }
 };
 
-//------------------------------- GET AVAILABLE ORDERS FOR DELIVERY PARTNERS --------------------------------------
+//------------------------------- GET AVAILABLE ORDERS FOR DELIVERY PARTNERS -----------------------------
+
 const getAvailableOrders = async (req, res) => {
   try {
     const orders = await deliveryService.getAvailableOrdersService();
@@ -51,6 +53,7 @@ const getAvailableOrders = async (req, res) => {
 };
 
 //------------------------------- DELIVERY PARTNER: ACCEPT ORDER --------------------------------------
+
 const acceptOrder = async (req, res) => {
   try {
     const order = await deliveryService.acceptOrderService(req.params.id, req.user.id);
@@ -61,7 +64,8 @@ const acceptOrder = async (req, res) => {
   }
 };
 
-//------------------------------- DELIVERY PARTNER: GET ASSIGNED DELIVERIES --------------------------------------
+//------------------------------- DELIVERY PARTNER: GET ASSIGNED DELIVERIES ---------------------------
+
 const getAssignedDeliveries = async (req, res) => {
   try {
     const orders = await deliveryService.getAssignedDeliveriesService(req.user.id);
@@ -72,7 +76,8 @@ const getAssignedDeliveries = async (req, res) => {
   }
 };
 
-//------------------------------- DELIVERY PARTNER: UPDATE DELIVERY STATUS --------------------------------------
+//------------------------------- DELIVERY PARTNER: UPDATE DELIVERY STATUS -------------------------------
+
 const updateDeliveryStatus = async (req, res) => {
   try {
     const order = await deliveryService.updateDeliveryStatusService(
