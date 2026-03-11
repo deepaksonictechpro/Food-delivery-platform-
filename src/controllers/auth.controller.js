@@ -91,7 +91,6 @@ async function logoutUser(req, res) {
 async function getUserProfile(req, res) {
   try {
     const userId = req.user.id;
-
     const user = await authService.fetchUserProfile(userId);
 
     return res.status(200).json({
