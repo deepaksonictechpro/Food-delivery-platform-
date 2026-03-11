@@ -44,13 +44,7 @@ const resetPasswordSchema = Joi.object({
   newPassword: Joi.string().min(6).required(),
 });
 
-//------------------------------- CREATE ADMIN ---------------------------------------
 
-const createAdminSchema = Joi.object({
-  fullName: Joi.string().min(3).required(),
-  email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
-});
 
 module.exports = {
   registerSchema,
@@ -59,5 +53,4 @@ module.exports = {
   forgotPasswordSchema,
   verifyForgotOtpSchema,
   resetPasswordSchema,
-  createAdminSchema,
 };

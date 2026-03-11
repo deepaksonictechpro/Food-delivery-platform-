@@ -28,5 +28,6 @@ const fileFilter = (req, file, cb) => {
 // Export separate uploaders
 const adminUpload = multer({ storage: getStorage("admin"), fileFilter });
 const foodPartnerUpload = multer({ storage: getStorage("food_partner"), fileFilter });
+const userUpload = multer({ storage: getStorage("user"), fileFilter });
 
-module.exports = { adminUpload, foodPartnerUpload };
+module.exports = { adminUpload, foodPartnerUpload, userUpload };

@@ -1,6 +1,9 @@
 const express = require("express");
 const authController = require("../controllers/auth.controller");
 const validate = require("../middlewares/validate.middleware");
+const {authUserMiddleware,authRoleMiddleware} = require("../middlewares/auth.middleware");
+const { userUpload } = require("../middlewares/upload.middleware");
+
 
 const {
   registerSchema,
@@ -51,6 +54,21 @@ router.post(
 
 router.post("/logout", 
   authController.logoutUser
+);
+
+router.get(
+  "/user-profile",
+  authUserMiddleware,
+  authRoleMiddleware(["user"]),
+  authController.getUserProfile
+);
+
+router.put(
+  "/update-user-profile",
+  authUserMiddleware,
+  authRoleMiddleware(["user"]),
+  userUpload.single("profileImage"),
+  authController.updateUserProfile
 );
 
 

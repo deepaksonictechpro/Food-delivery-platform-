@@ -1,6 +1,6 @@
 const foodPartnerService = require("../services/food-partner.services");
 
-// Existing getFoodPartnerById
+// ==== get Food Partner By Id =====
 async function getFoodPartnerById(req, res) {
   try {
     const id = req.params.id;
@@ -34,6 +34,8 @@ async function getFoodPartnerProfile(req, res) {
     return res.status(500).json({ success: false, message: error.message });
   }
 }
+
+// ===== Update Food Partner Profile =====
 
 async function updateFoodPartnerProfile(req, res) {
   try {

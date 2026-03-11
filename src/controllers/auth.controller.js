@@ -86,6 +86,54 @@ async function logoutUser(req, res) {
   }
 }
 
+// ------------------------- GET USER PROFILE -------------------------
+
+async function getUserProfile(req, res) {
+  try {
+    const userId = req.user.id;
+
+    const user = await authService.fetchUserProfile(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "User profile fetched successfully",
+      data: user,
+    });
+  } catch (error) {
+    console.error("GET USER PROFILE ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
+// ------------------------- UPDATE USER PROFILE -------------------------
+
+async function updateUserProfile(req, res) {
+  try {
+    const userId = req.user.id;
+    const data = { ...req.body };
+
+    if (req.file) {
+      data.profileImage = req.file.path;
+    }
+
+    const user = await authService.updateUserProfile(userId, data);
+
+    return res.status(200).json({
+      success: true,
+      message: "User profile updated successfully",
+      data: user,
+    });
+  } catch (error) {
+    console.error("UPDATE USER PROFILE ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
 
 
 module.exports = {
@@ -96,4 +144,6 @@ module.exports = {
   verifyForgotPasswordOtp,
   resetPassword,
   logoutUser,
+  getUserProfile,
+  updateUserProfile,
 };

@@ -139,6 +139,48 @@ async function logoutService() {
   return { message: "User logged out successfully" };
 }
 
+// ------------------------- GET USER PROFILE -------------------------
+
+async function fetchUserProfile(userId) {
+  const user = await User.findOne({
+    where: { id: userId, role: "user" },
+    attributes: [
+      "id",
+      "fullName",
+      "email",
+      "profileImage",
+      "status",
+    ],
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
+}
+
+// ------------------------- UPDATE USER PROFILE -------------------------
+
+async function updateUserProfile(userId, data) {
+  const user = await User.findOne({
+    where: { id: userId, role: "user" },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  await user.update(data);
+
+  return {
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    profileImage: user.profileImage,
+    status: user.status,
+  };
+}
 
 
 module.exports = {
@@ -149,4 +191,6 @@ module.exports = {
   verifyForgotPasswordOtpService,
   resetPasswordService,
   logoutService,
+  fetchUserProfile,
+  updateUserProfile,
 };
