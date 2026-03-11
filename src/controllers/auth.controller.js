@@ -86,20 +86,7 @@ async function logoutUser(req, res) {
   }
 }
 
-//---------------------------------- CREATE ADMIN ---------------------------------------
 
-async function createAdmin(req, res) {
-  try {
-    const result = await authService.createAdminService(req.body);
-    res.status(201).json({
-      success: true,
-      message: "Admin created successfully",
-      ...result,
-    });
-  } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
-  }
-}
 
 module.exports = {
   registerUser,
@@ -109,5 +96,4 @@ module.exports = {
   verifyForgotPasswordOtp,
   resetPassword,
   logoutUser,
-  createAdmin,
 };

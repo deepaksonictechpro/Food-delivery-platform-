@@ -3,6 +3,17 @@ const router = express.Router();
 const adminController = require("../controllers/admin.controller");
 const { authAdminMiddleware } = require("../middlewares/auth.middleware");
 const { adminUpload } = require("../middlewares/upload.middleware");
+const validate = require("../middlewares/validate.middleware");
+const { createAdminSchema } = require("../validations/auth.validation");
+
+// ---------------------------------- CREATE ADMIN ---------------------------------------
+
+router.post(
+  "/create-admin",
+  validate(createAdminSchema),
+  adminController.createAdmin
+);
+
 
 // Existing routes here...
 router.get("/users", authAdminMiddleware, adminController.getAllUsers);

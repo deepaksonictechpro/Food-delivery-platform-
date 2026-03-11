@@ -1,5 +1,20 @@
 const adminService = require("../services/admin.services");
 
+//---------------------------------- CREATE ADMIN ---------------------------------------
+
+async function createAdmin(req, res) {
+  try {
+    const result = await authService.createAdminService(req.body);
+    res.status(201).json({
+      success: true,
+      message: "Admin created successfully",
+      ...result,
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+}
+
 //--------------------------------------- Get all users ---------------------------------------------
 
 async function getAllUsers(req, res) {
@@ -113,4 +128,5 @@ module.exports = {
   getAllDeliveryPartners,
   getAdminProfile,
   updateAdminProfile,
+  createAdmin,
 };

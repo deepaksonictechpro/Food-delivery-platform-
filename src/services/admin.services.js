@@ -1,5 +1,32 @@
 const { User, Food } = require("../models");
 
+//------------------------------- CREATE ADMIN (ONE TIME ONLY)--------------------------------------
+
+async function createAdminService({ fullName, email, password }) {
+  if (!fullName || !email || !password) throw new Error("All fields are required");
+
+  const existingAdmin = await User.findOne({ where: { email, role: "admin" } });
+  if (existingAdmin) throw new Error("Admin already exists");
+
+  const admin = await User.create({
+    fullName,
+    email,
+    password,
+    role: "admin",
+  });
+
+  const token = jwt.sign({ id: admin.id, role: admin.role }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
+
+  return {
+    admin: { id: admin.id, fullName: admin.fullName, email: admin.email, role: admin.role },
+    token,
+  };
+}
+
+
+
 //--------------------------------------- Get all users ---------------------------------------------
 
 async function fetchAllUsers() {
@@ -86,4 +113,5 @@ module.exports = {
   fetchAllDeliveryPartners,
   fetchAdminProfile,
   updateAdminProfile,
+  createAdminService,
 };

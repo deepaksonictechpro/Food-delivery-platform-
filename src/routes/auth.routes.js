@@ -9,7 +9,6 @@ const {
   forgotPasswordSchema,
   verifyForgotOtpSchema,
   resetPasswordSchema,
-  createAdminSchema,
 } = require("../validations/auth.validation");
 
 const router = express.Router();
@@ -54,13 +53,6 @@ router.post("/logout",
   authController.logoutUser
 );
 
-// ---------------------------------- CREATE ADMIN ---------------------------------------
-
-router.post(
-  "/create-admin",
-  validate(createAdminSchema),
-  authController.createAdmin
-);
 
 
 module.exports = router;
