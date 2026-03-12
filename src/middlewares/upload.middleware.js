@@ -29,5 +29,6 @@ const fileFilter = (req, file, cb) => {
 const adminUpload = multer({ storage: getStorage("admin"), fileFilter });
 const foodPartnerUpload = multer({ storage: getStorage("food_partner"), fileFilter });
 const userUpload = multer({ storage: getStorage("user"), fileFilter });
+const deliverypartnerUpload = multer({storage: getStorage("delivery_partner"), fileFilter});
 
-module.exports = { adminUpload, foodPartnerUpload, userUpload };
+module.exports = { adminUpload, foodPartnerUpload, userUpload, deliverypartnerUpload };

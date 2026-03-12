@@ -12,12 +12,13 @@ const sequelize = db.sequelize;
 const authRoutes = require("./routes/auth.routes");
 const foodRoutes = require("./routes/food.routes");
 const foodPartnerRoutes = require("./routes/food-partner.routes");
-const deliveryPartnerRoutes = require("./routes/DeliveryOrders.routes");
+const deliveryOrderRoutes = require("./routes/DeliveryOrders.routes");
 const adminRoutes = require("./routes/admin.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const ordercancelRoutes = require("./routes/orderCancellation.routes");
 const cardRoutes = require("./routes/cart.routes");
 const addressRoutes = require("./routes/address.routes");
+const deliveryPartnerRoutes = require("./routes/delivery_partner.routes");
 
 const app = express();
 
@@ -41,12 +42,11 @@ app.use("/api/auth", authRoutes);
 app.use("/api/foods", foodRoutes);
 app.use("/api/food-partners", foodPartnerRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/delivery", deliveryPartnerRoutes);
+app.use("/api/delivery", deliveryOrderRoutes);
 app.use("/api/placeOrder", ordercancelRoutes);
 app.use("/api/card", cardRoutes);
 app.use("/api/address", addressRoutes);
-
-// ====== Dashboard Routes ======
+app.use("/api/Delivery_partner", deliveryPartnerRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
 // ====== Error Handling Middleware ======
