@@ -4,7 +4,7 @@ const adminService = require("../services/admin.services");
 
 async function createAdmin(req, res) {
   try {
-    const result = await authService.createAdminService(req.body);
+    const result = await adminService.createAdminService(req.body);
     res.status(201).json({
       success: true,
       message: "Admin created successfully",
@@ -105,7 +105,6 @@ async function updateAdminProfile(req, res) {
     const adminId = req.user.id;
     const data = { ...req.body };
 
-    // If profile image uploaded via multer
     if (req.file) data.profileImage = req.file.path;
 
     const admin = await adminService.updateAdminProfile(adminId, data);

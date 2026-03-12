@@ -4,7 +4,7 @@ const adminController = require("../controllers/admin.controller");
 const { authAdminMiddleware } = require("../middlewares/auth.middleware");
 const { adminUpload } = require("../middlewares/upload.middleware");
 const validate = require("../middlewares/validate.middleware");
-const { createAdminSchema } = require("../validations/auth.validation");
+const { createAdminSchema, updateAdminProfileSchema } = require("../validations/auth.validation");
 
 // ---------------------------------- CREATE ADMIN ---------------------------------------
 
@@ -23,6 +23,13 @@ router.get("/partners/delivery", authAdminMiddleware, adminController.getAllDeli
 
 // ===== Admin Profile =====
 router.get("/profile", authAdminMiddleware, adminController.getAdminProfile);
-router.put("/profile", authAdminMiddleware, adminUpload.single("profileImage"), adminController.updateAdminProfile);
+
+router.put(
+  "/profile",
+  authAdminMiddleware,
+  adminUpload.single("profileImage"),
+  validate(updateAdminProfileSchema),
+  adminController.updateAdminProfile
+);
 
 module.exports = router;
