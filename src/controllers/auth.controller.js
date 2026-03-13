@@ -112,7 +112,11 @@ async function getUserProfile(req, res) {
 async function updateUserProfile(req, res) {
   try {
     const userId = req.user.id;
-    const data = { ...req.body };
+
+    const data = {
+      fullName: req.body.fullName,
+      phoneNumber: req.body.phoneNumber,
+    };
 
     if (req.file) {
       data.profileImage = req.file.path;
@@ -133,7 +137,6 @@ async function updateUserProfile(req, res) {
     });
   }
 }
-
 
 module.exports = {
   registerUser,

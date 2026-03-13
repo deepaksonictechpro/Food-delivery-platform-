@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const phoneRegex = /^[6-9]\d{9}$/;
 
 //------------------------------- REGISTER -------------------------------------------
 
@@ -9,6 +10,13 @@ const registerSchema = Joi.object({
   role: Joi.string()
     .valid("user", "food_partner", "delivery_partner")
     .required(),
+
+  phoneNumber: Joi.string()
+    .pattern(phoneRegex)
+    .optional()
+    .messages({
+      "string.pattern.base": "Phone number must be valid 10 digit Indian number",
+    }),
 });
 
 //------------------------------- VERIFY REGISTER OTP --------------------------------
@@ -44,6 +52,18 @@ const resetPasswordSchema = Joi.object({
   newPassword: Joi.string().min(6).required(),
 });
 
+// --------------------------- update profile -----------------------------
+
+const updateUserProfileSchema = Joi.object({
+  fullName: Joi.string().min(3).optional(),
+
+  phoneNumber: Joi.string()
+    .pattern(phoneRegex)
+    .optional()
+    .messages({
+      "string.pattern.base": "Phone number must be valid 10 digit",
+    }),
+});
 
 
 module.exports = {
@@ -53,4 +73,5 @@ module.exports = {
   forgotPasswordSchema,
   verifyForgotOtpSchema,
   resetPasswordSchema,
+  updateUserProfileSchema,
 };

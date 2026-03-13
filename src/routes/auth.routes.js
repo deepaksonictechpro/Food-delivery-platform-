@@ -12,6 +12,7 @@ const {
   forgotPasswordSchema,
   verifyForgotOtpSchema,
   resetPasswordSchema,
+  updateUserProfileSchema,
 } = require("../validations/auth.validation");
 
 const router = express.Router();
@@ -68,6 +69,7 @@ router.put(
   authUserMiddleware,
   authRoleMiddleware(["user"]),
   userUpload.single("profileImage"),
+  validate(updateUserProfileSchema),
   authController.updateUserProfile
 );
 

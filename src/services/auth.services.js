@@ -10,7 +10,7 @@ function generateOtp() {
 
 //------------------------------- USER REGISTRATION --------------------------------------
 
-async function registerUserService({ fullName, email, password, role }) {
+async function registerUserService({ fullName, email, password, role, phoneNumber }) {
   if (!fullName || !email || !password || !role)
     throw new Error("All fields including role are required");
 
@@ -25,10 +25,11 @@ async function registerUserService({ fullName, email, password, role }) {
   const user = await User.create({
     fullName,
     email,
-    password, // model will hash automatically
+    password,
     otp,
     isOtpVerified: false,
     role,
+    phoneNumber,
   });
 
   console.log(`OTP for ${email}: ${otp}`);
@@ -78,6 +79,7 @@ async function loginUserService({ email, password, role }) {
       email: user.email,
       fullName: user.fullName,
       role: user.role,
+      phoneNumber: user.phoneNumber
     },
   };
 }
@@ -148,6 +150,7 @@ async function fetchUserProfile(userId) {
       "id",
       "fullName",
       "email",
+      "phoneNumber",
       "profileImage",
       "status",
     ],
@@ -160,7 +163,7 @@ async function fetchUserProfile(userId) {
   return user;
 }
 
-// ------------------------- UPDATE USER PROFILE -------------------------
+//----------------------------------- Update User Profile -----------------------------------
 
 async function updateUserProfile(userId, data) {
   const user = await User.findOne({
@@ -171,17 +174,21 @@ async function updateUserProfile(userId, data) {
     throw new Error("User not found");
   }
 
-  await user.update(data);
+  await user.update({
+    fullName: data.fullName || user.fullName,
+    phoneNumber: data.phoneNumber || user.phoneNumber,
+    profileImage: data.profileImage || user.profileImage,
+  });
 
   return {
     id: user.id,
     fullName: user.fullName,
     email: user.email,
+    phoneNumber: user.phoneNumber,
     profileImage: user.profileImage,
     status: user.status,
   };
 }
-
 
 module.exports = {
   registerUserService,
