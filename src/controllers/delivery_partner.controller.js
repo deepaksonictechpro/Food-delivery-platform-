@@ -33,10 +33,18 @@ async function updateDeliveryPartnerProfile(req, res) {
 
     const partnerId = req.user.id;
 
-    const data = { ...req.body };
+    const data = {
+      fullName: req.body.fullName,
+      phoneNumber: req.body.phoneNumber,
+      vehicleType: req.body.vehicleType,
+      vehicleNumber: req.body.vehicleNumber,
+      drivingLicenseNumber: req.body.drivingLicenseNumber,
+      totalDeliveries: req.body.totalDeliveries,
+      earnings: req.body.earnings
+    };
 
     if (req.file) {
-      data.profileImage = `/uploads/delivery_partner${req.file.filename}`;
+      data.profileImage = `/uploads/delivery_partner/${req.file.filename}`;
     }
 
     const partner = await deliveryPartnerService.updateDeliveryPartnerProfile(partnerId, data);

@@ -103,6 +103,9 @@ async function getAvailableOrdersService() {
 // ------------------------------- ACCEPT ORDER SERVICE --------------------------------------
 
 async function acceptOrderService(orderId, deliveryPartnerId) {
+
+  await checkDeliveryPartnerProfile(deliveryPartnerId);
+
   const order = await DeliveryOrder.findOne({
     where: { id: orderId, status: "pending", deliveryPartnerId: null },
     include: [
@@ -114,7 +117,8 @@ async function acceptOrderService(orderId, deliveryPartnerId) {
   if (!order) throw new Error("Order not found or already assigned");
 
   order.deliveryPartnerId = deliveryPartnerId;
-  order.status = "picked";
+  order.status = "accepted";
+
   await order.save();
 
   return cleanOrderResponse(order);
@@ -156,6 +160,41 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status) {
   await order.save();
 
   return cleanOrderResponse(order);
+}
+
+// ------------------------------- DELIVERY PARTNER PROFILE CHECK --------------------------------------
+
+async function checkDeliveryPartnerProfile(deliveryPartnerId) {
+
+  const partner = await User.findOne({
+    where: {
+      id: deliveryPartnerId,
+      role: "delivery_partner",
+      status: "active"
+    }
+  });
+
+  if (!partner) {
+    throw new Error("Delivery partner not found or inactive");
+  }
+
+  if (!partner.phoneNumber) {
+    throw new Error("Please add phone number before accepting orders");
+  }
+
+  if (!partner.vehicleType) {
+    throw new Error("Please update vehicle type in profile");
+  }
+
+  if (!partner.vehicleNumber) {
+    throw new Error("Please update vehicle number in profile");
+  }
+
+  if (!partner.drivingLicenseNumber) {
+    throw new Error("Please update driving license number");
+  }
+
+  return partner;
 }
 
 module.exports = {

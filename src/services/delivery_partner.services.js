@@ -12,6 +12,7 @@ async function getDeliveryPartnerProfile(partnerId) {
       "id",
       "fullName",
       "email",
+      "phoneNumber",
       "profileImage",
       "status",
       "vehicleType",
@@ -45,12 +46,22 @@ async function updateDeliveryPartnerProfile(partnerId, data) {
     throw new Error("Delivery partner not found");
   }
 
-  await partner.update(data);
+  await partner.update({
+    fullName: data.fullName || partner.fullName,
+    phoneNumber: data.phoneNumber || partner.phoneNumber,
+    profileImage: data.profileImage || partner.profileImage,
+    vehicleType: data.vehicleType || partner.vehicleType,
+    vehicleNumber: data.vehicleNumber || partner.vehicleNumber,
+    drivingLicenseNumber: data.drivingLicenseNumber || partner.drivingLicenseNumber,
+    totalDeliveries: data.totalDeliveries || partner.totalDeliveries,
+    earnings: data.earnings || partner.earnings
+  });
 
   return {
     id: partner.id,
     fullName: partner.fullName,
     email: partner.email,
+    phoneNumber: partner.phoneNumber,
     profileImage: partner.profileImage,
     status: partner.status,
     vehicleType: partner.vehicleType,
@@ -60,7 +71,6 @@ async function updateDeliveryPartnerProfile(partnerId, data) {
     earnings: partner.earnings
   };
 }
-
 module.exports = {
   getDeliveryPartnerProfile,
   updateDeliveryPartnerProfile
