@@ -5,9 +5,11 @@ const authService = require("../services/auth.services");
 async function registerUser(req, res) {
   try {
     const result = await authService.registerUserService(req.body);
+
     res.status(201).json({
       message: "OTP sent. Verify to complete registration",
-      ...result,
+      userId: result.userId,
+      role: result.role,
     });
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -18,9 +20,13 @@ async function registerUser(req, res) {
 
 async function verifyUserOtp(req, res) {
   try {
-    const result = await authService.verifyUserOtpService(req.body.email, req.body.otp);
+    const result = await authService.verifyUserOtpService(
+      req.body.email,
+      req.body.otp
+    );
+
     res.status(200).json({
-      message: "OTP verified. Registration complete!",
+      message: "OTP verified successfully",
       ...result,
     });
   } catch (err) {
@@ -33,8 +39,9 @@ async function verifyUserOtp(req, res) {
 async function loginUser(req, res) {
   try {
     const result = await authService.loginUserService(req.body);
+
     res.status(200).json({
-      message: `${req.body.role} logged in successfully`,
+      message: "Login successful",
       ...result,
     });
   } catch (err) {
