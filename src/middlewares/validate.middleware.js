@@ -1,20 +1,30 @@
-const validate = (schema, property = "body") => {
+function validate(schema, property = 'body') {
+  if (!schema) {
+    throw new Error(
+      `Validation schema is undefined. Check your imports or schema definition.`
+    );
+  }
+
   return (req, res, next) => {
-    const { error, value } = schema.validate(req[property], {
+    const dataToValidate = req[property];
+
+    const { error, value } = schema.validate(dataToValidate, {
       abortEarly: false,
-      allowUnknown: false,
+      stripUnknown: true, 
     });
 
     if (error) {
       return res.status(400).json({
-        message: "Validation error",
-        errors: error.details.map(e => e.message),
+        success: false,
+        message: "Validation failed",
+        errors: error.details.map((err) => err.message),
       });
     }
 
-    req[property] = value; // cleaned data
+    req[property] = value;
+
     next();
   };
-};
+}
 
 module.exports = validate;

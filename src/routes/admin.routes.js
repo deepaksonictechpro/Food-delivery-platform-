@@ -4,7 +4,7 @@ const adminController = require("../controllers/admin.controller");
 const { authAdminMiddleware } = require("../middlewares/auth.middleware");
 const { adminUpload } = require("../middlewares/upload.middleware");
 const validate = require("../middlewares/validate.middleware");
-const { createAdminSchema, updateAdminProfileSchema } = require("../validations/auth.validation");
+const { createAdminSchema, updateAdminProfileSchema } = require("../validations/admin.validation");
 
 // ---------------------------------- CREATE ADMIN ---------------------------------------
 
