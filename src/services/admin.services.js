@@ -1,26 +1,45 @@
 const { User, Food } = require("../models");
+const jwt = require('jsonwebtoken');
 
 //------------------------------- CREATE ADMIN (ONE TIME ONLY)--------------------------------------
 
 async function createAdminService({ fullName, email, password }) {
-  if (!fullName || !email || !password) throw new Error("All fields are required");
+  if (!fullName || !email || !password) {
+    throw new Error("All fields are required");
+  }
 
-  const existingAdmin = await User.findOne({ where: { email, role: "admin" } });
-  if (existingAdmin) throw new Error("Admin already exists");
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const existingAdmin = await User.findOne({
+    where: { email: normalizedEmail, role: "admin" },
+  });
+
+  if (existingAdmin) {
+    throw new Error("Admin already exists");
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   const admin = await User.create({
     fullName,
-    email,
-    password,
+    email: normalizedEmail,
+    password: hashedPassword,
     role: "admin",
   });
 
-  const token = jwt.sign({ id: admin.id, role: admin.role }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
+  const token = jwt.sign(
+    { id: admin.id, role: admin.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 
   return {
-    admin: { id: admin.id, fullName: admin.fullName, email: admin.email, role: admin.role },
+    admin: {
+      id: admin.id,
+      fullName: admin.fullName,
+      email: admin.email,
+      role: admin.role,
+    },
     token,
   };
 }
