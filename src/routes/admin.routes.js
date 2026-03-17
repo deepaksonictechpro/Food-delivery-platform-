@@ -8,12 +8,12 @@ const { createAdminSchema, updateAdminProfileSchema } = require("../validations/
 
 // ---------------------------------- CREATE ADMIN ---------------------------------------
 
-router.post(
-  "/create-admin",
-  validate(createAdminSchema),
-  adminController.createAdmin
-);
-
+// router.post(
+//   "/create-admin",
+//   authAdminMiddleware, 
+//   validate(createAdminSchema),
+//   adminController.createAdmin
+// );
 
 // Existing routes here...
 router.get("/users", authAdminMiddleware, adminController.getAllUsers);
