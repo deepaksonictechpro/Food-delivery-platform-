@@ -1,11 +1,10 @@
-// app.js
 require("dotenv").config();
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const path = require("path");
 
-const db = require("./models"); 
+const db = require("./models");
 const sequelize = db.sequelize;
 
 // Routes
@@ -49,13 +48,27 @@ app.use("/api/address", addressRoutes);
 app.use("/api/Delivery_partner", deliveryPartnerRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
-// ====== Error Handling Middleware ======
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Something went wrong", error: err.message });
+
+app.use((req, res) => {
+  res.status(404).json({
+    message: "Route not found",
+  });
 });
 
-// ====== 404 Handler ======
-app.use((req, res) => res.status(404).json({ message: "Route not found" }));
+app.use((err, req, res, next) => {
+  const requestId = Date.now();
+
+  console.error(`[ERROR] [${requestId}]`, {
+    message: err.message,
+    stack: err.stack,
+    path: req.originalUrl,
+    method: req.method,
+  });
+
+  res.status(err.statusCode || 500).json({
+    message: err.isOperational ? err.message : "Internal Server Error",
+    requestId,
+  });
+});
 
 module.exports = app;

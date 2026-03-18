@@ -16,20 +16,35 @@ async function getUserAddressesService(userId) {
 
 //------------------------------- UPDATE ADDRESS --------------------------------------
 async function updateAddressService(userId, addressId, data) {
-  const address = await Address.findOne({ where: { id: addressId, userId } });
+  const address = await Address.findOne({
+    where: { id: addressId, userId },
+  });
+
   if (!address) throw new Error("Address not found");
 
-  Object.assign(address, data);
+  if (data.label !== undefined) address.label = data.label;
+  if (data.addressLine !== undefined) address.addressLine = data.addressLine;
+  if (data.city !== undefined) address.city = data.city;
+  if (data.state !== undefined) address.state = data.state;
+  if (data.zipCode !== undefined) address.zipCode = data.zipCode;
+  if (data.phoneNumber !== undefined) address.phoneNumber = data.phoneNumber;
+  if (data.doorImage !== undefined) address.doorImage = data.doorImage;
+
   await address.save();
+
   return address;
 }
 
 //------------------------------- DELETE ADDRESS --------------------------------------
 async function deleteAddressService(userId, addressId) {
-  const address = await Address.findOne({ where: { id: addressId, userId } });
+  const address = await Address.findOne({
+    where: { id: addressId, userId },
+  });
+
   if (!address) throw new Error("Address not found");
 
   await address.destroy();
+
   return { message: "Address deleted successfully" };
 }
 
