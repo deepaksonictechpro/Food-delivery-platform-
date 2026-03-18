@@ -44,34 +44,57 @@ function cleanOrderResponse(order) {
 //------------------------------- PLACE ORDER SERVICE --------------------------------------
 
 async function placeOrderService(userId, cartItems, address, paymentMethod) {
-  if (!cartItems || !cartItems.length) throw new Error("Cart is empty");
-
-  const orders = [];
-
-  for (const item of cartItems) {
-    if (!item.foodId) throw new Error("Cart item missing foodId");
-
-    const order = await DeliveryOrder.create({
-      foodId: item.foodId,
-      userId,
-      quantity: item.quantity,
-      address,
-      paymentMethod,
-      status: "pending",
-      earning: 0,
-    });
-
-    const createdOrder = await DeliveryOrder.findByPk(order.id, {
-      include: [{ model: Food, as: "food" }],
-    });
-
-    orders.push(cleanOrderResponse(createdOrder));
-
-    // Remove item from cart after creating order
-    await removeFromCartService(userId, item.foodId);
+  if (!cartItems || !cartItems.length) {
+    throw new Error("Cart is empty");
   }
 
-  return orders;
+  const transaction = await sequelize.transaction();
+
+  try {
+    const orderData = cartItems.map((item) => {
+      if (!item.foodId) throw new Error("Cart item missing foodId");
+
+      return {
+        foodId: item.foodId,
+        userId,
+        quantity: item.quantity,
+        address,
+        paymentMethod,
+        status: ORDER_STATUS.PENDING,
+        earning: 0,
+      };
+    });
+
+    const createdOrders = await DeliveryOrder.bulkCreate(orderData, {
+      transaction,
+      returning: true,
+    });
+
+    const foodIds = cartItems.map((item) => item.foodId);
+
+    await Cart.destroy({
+      where: {
+        userId,
+        foodId: foodIds,
+      },
+      transaction,
+    });
+
+    const ordersWithDetails = await DeliveryOrder.findAll({
+      where: {
+        id: createdOrders.map((o) => o.id),
+      },
+      include: [{ model: Food, as: "food" }],
+      transaction,
+    });
+
+    await transaction.commit();
+
+    return ordersWithDetails.map(cleanOrderResponse);
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
 }
 
 // ------------------------------- GET USER ORDERS SERVICE --------------------------------------
@@ -103,11 +126,10 @@ async function getAvailableOrdersService() {
 // ------------------------------- ACCEPT ORDER SERVICE --------------------------------------
 
 async function acceptOrderService(orderId, deliveryPartnerId) {
-
   await checkDeliveryPartnerProfile(deliveryPartnerId);
 
   const order = await DeliveryOrder.findOne({
-    where: { id: orderId, status: "pending", deliveryPartnerId: null },
+    where: { id: orderId, status: ORDER_STATUS.PENDING, deliveryPartnerId: null },
     include: [
       { model: Food, as: "food" },
       { model: User, as: "user", attributes: ["id", "fullName"] },
@@ -117,8 +139,7 @@ async function acceptOrderService(orderId, deliveryPartnerId) {
   if (!order) throw new Error("Order not found or already assigned");
 
   order.deliveryPartnerId = deliveryPartnerId;
-  order.status = "accepted";
-
+  order.status = ORDER_STATUS.ACCEPTED;
   await order.save();
 
   return cleanOrderResponse(order);

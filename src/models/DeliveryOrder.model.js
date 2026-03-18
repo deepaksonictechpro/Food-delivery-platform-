@@ -1,3 +1,5 @@
+const { ORDER_STATUS } = require("../constants/orderStatus.constants");
+
 module.exports = (sequelize, DataTypes) => {
   const DeliveryOrder = sequelize.define("DeliveryOrder", {
     id: {
@@ -27,14 +29,14 @@ module.exports = (sequelize, DataTypes) => {
     },
     status: {
       type: DataTypes.ENUM(
-      "pending",
-      "accepted",
-      "picked_up",
-      "delivered",
-      "cancel_requested",
-      "cancelled"
+        ORDER_STATUS.PENDING,
+        ORDER_STATUS.ACCEPTED,
+        ORDER_STATUS.PICKED_UP,
+        ORDER_STATUS.DELIVERED,
+        ORDER_STATUS.CANCEL_REQUESTED,
+        ORDER_STATUS.CANCELLED
       ),
-    defaultValue: "pending",
+      defaultValue: ORDER_STATUS.PENDING,
     },
     paymentMethod: {
       type: DataTypes.STRING,
@@ -46,34 +48,29 @@ module.exports = (sequelize, DataTypes) => {
     },
 
     // ================= CANCELLATION FIELDS =================
-    cancelReason: { 
-      type: DataTypes.TEXT, 
-      allowNull: true 
+    cancelReason: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
-
-    cancelRequestedAt: { 
-      type: DataTypes.DATE, 
-      allowNull: true 
+    cancelRequestedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
-
-    cancelApprovedBy: { 
-      type: DataTypes.INTEGER.UNSIGNED, 
-      allowNull: true 
+    cancelApprovedBy: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: true,
     },
-
-    cancelApprovedAt: { 
-      type: DataTypes.DATE, 
-      allowNull: true 
+    cancelApprovedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
-
-    cancelDecisionReason: { 
-      type: DataTypes.TEXT, 
-      allowNull: true 
+    cancelDecisionReason: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
-
-    previousStatus: { 
-      type: DataTypes.STRING, 
-      allowNull: true 
+    previousStatus: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   });
 
