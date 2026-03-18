@@ -105,7 +105,7 @@ async function fetchDeliveryPartnerDashboard(deliveryPartnerId) {
     raw: true,
   });
   const avgSeconds = Number(avgTimeData[0].avgSeconds || 0);
-  const avgDeliveryTimeString = `${Math.floor(avgSeconds / 60)} minat`;
+  const avgDeliveryTimeString = `${Math.floor(avgSeconds / 60)} minutes`;
 
   return { totalDeliveries, totalEarnings, todayDeliveries, avgDeliveryTime: avgDeliveryTimeString };
 }

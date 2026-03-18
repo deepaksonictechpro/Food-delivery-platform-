@@ -15,6 +15,7 @@ async function getUserAddressesService(userId) {
 }
 
 //------------------------------- UPDATE ADDRESS --------------------------------------
+
 async function updateAddressService(userId, addressId, data) {
   const address = await Address.findOne({
     where: { id: addressId, userId },
@@ -23,18 +24,33 @@ async function updateAddressService(userId, addressId, data) {
   if (!address) throw new Error("Address not found");
 
   if (data.label !== undefined) address.label = data.label;
-  if (data.addressLine !== undefined) address.addressLine = data.addressLine;
+
+  if (data.address !== undefined) {
+    if (!data.address || !data.address.trim()) {
+      throw new Error("Address cannot be empty");
+    }
+    address.address = data.address.trim();
+  }
+
   if (data.city !== undefined) address.city = data.city;
   if (data.state !== undefined) address.state = data.state;
   if (data.zipCode !== undefined) address.zipCode = data.zipCode;
-  if (data.phoneNumber !== undefined) address.phoneNumber = data.phoneNumber;
-  if (data.doorImage !== undefined) address.doorImage = data.doorImage;
+
+  if (data.phoneNumber !== undefined) {
+    if (!data.phoneNumber.trim()) {
+      throw new Error("Phone number cannot be empty");
+    }
+    address.phoneNumber = data.phoneNumber;
+  }
+
+  if (data.doorImage !== undefined) {
+    address.doorImage = data.doorImage;
+  }
 
   await address.save();
 
   return address;
 }
-
 //------------------------------- DELETE ADDRESS --------------------------------------
 async function deleteAddressService(userId, addressId) {
   const address = await Address.findOne({

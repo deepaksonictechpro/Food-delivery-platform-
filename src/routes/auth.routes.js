@@ -1,9 +1,17 @@
 const express = require("express");
 const authController = require("../controllers/auth.controller");
 const validate = require("../middlewares/validate.middleware");
-const {authUserMiddleware,authRoleMiddleware} = require("../middlewares/auth.middleware");
 const { userUpload } = require("../middlewares/upload.middleware");
 
+const {
+  authUserMiddleware,
+  authRoleMiddleware,
+} = require("../middlewares/auth.middleware");
+
+const {
+  otpSendLimiter,
+  otpVerifyLimiter,
+} = require("../middlewares/rateLimit.middleware");
 
 const {
   registerSchema,
@@ -17,46 +25,56 @@ const {
 
 const router = express.Router();
 
+// ---------------- REGISTER ----------------
 router.post(
   "/register",
+  otpSendLimiter, 
   validate(registerSchema),
   authController.registerUser
 );
 
+// ---------------- VERIFY OTP ----------------
 router.post(
   "/verify-otp",
+  otpVerifyLimiter,
   validate(verifyOtpSchema),
   authController.verifyUserOtp
 );
 
+// ---------------- LOGIN ----------------
 router.post(
   "/login",
   validate(loginSchema),
   authController.loginUser
 );
 
+// ---------------- FORGOT PASSWORD ----------------
 router.post(
   "/forgot-password",
+  otpSendLimiter,
   validate(forgotPasswordSchema),
   authController.forgotPassword
 );
 
+// ---------------- VERIFY FORGOT OTP ----------------
 router.post(
   "/forgot-password/verify-otp",
+  otpVerifyLimiter,
   validate(verifyForgotOtpSchema),
   authController.verifyForgotPasswordOtp
 );
 
+// ---------------- RESET PASSWORD ----------------
 router.post(
   "/reset-password",
   validate(resetPasswordSchema),
   authController.resetPassword
 );
 
-router.post("/logout", 
-  authController.logoutUser
-);
+// ---------------- LOGOUT ----------------
+router.post("/logout", authController.logoutUser);
 
+// ---------------- GET USER PROFILE ----------------
 router.get(
   "/user-profile",
   authUserMiddleware,
@@ -64,6 +82,7 @@ router.get(
   authController.getUserProfile
 );
 
+// ---------------- UPDATE USER PROFILE ----------------
 router.put(
   "/update-user-profile",
   authUserMiddleware,
@@ -72,7 +91,5 @@ router.put(
   validate(updateUserProfileSchema),
   authController.updateUserProfile
 );
-
-
 
 module.exports = router;

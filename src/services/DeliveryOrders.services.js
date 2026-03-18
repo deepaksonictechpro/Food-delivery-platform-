@@ -49,60 +49,47 @@ async function placeOrderService(userId, cartItems, address, paymentMethod) {
     throw new Error("Cart is empty");
   }
 
-  const transaction = await sequelize.transaction();
-
-  try {
-    const orderData = [];
-
-    for (const item of cartItems) {
+  return await sequelize.transaction(async (transaction) => {
+    const orderData = cartItems.map((item) => {
       if (!item.foodId) throw new Error("Cart item missing foodId");
 
-      let quantity = parseInt(item.quantity);
-
-      if (isNaN(quantity) || quantity < 1) {
-        throw new Error("Invalid quantity. Must be at least 1");
+      if (!item.quantity || item.quantity <= 0) {
+        throw new Error("Invalid quantity");
       }
 
-      if (quantity > 10) {
-        throw new Error("Maximum 10 items allowed per order");
-      }
-
-      const food = await Food.findOne({
-        where: { id: item.foodId },
-        transaction,
-      });
-
-      if (!food) throw new Error("Food item not found");
-
-      if (!food.isAvailable) {
-        throw new Error(`${food.name} is currently unavailable`);
-      }
-
-      orderData.push({
+      return {
         foodId: item.foodId,
         userId,
-        quantity,
+        quantity: item.quantity,
         address,
         paymentMethod,
         status: ORDER_STATUS.PENDING,
         earning: 0,
-      });
-    }
+      };
+    });
 
     const createdOrders = await DeliveryOrder.bulkCreate(orderData, {
       transaction,
       returning: true,
     });
 
+    if (!createdOrders.length) {
+      throw new Error("Failed to create orders");
+    }
+
     const foodIds = cartItems.map((item) => item.foodId);
 
-    await Cart.destroy({
+    const deletedCount = await Cart.destroy({
       where: {
         userId,
         foodId: foodIds,
       },
       transaction,
     });
+
+    if (deletedCount !== cartItems.length) {
+      throw new Error("Cart cleanup failed");
+    }
 
     const ordersWithDetails = await DeliveryOrder.findAll({
       where: {
@@ -112,13 +99,8 @@ async function placeOrderService(userId, cartItems, address, paymentMethod) {
       transaction,
     });
 
-    await transaction.commit();
-
     return ordersWithDetails.map(cleanOrderResponse);
-  } catch (error) {
-    await transaction.rollback();
-    throw error;
-  }
+  });
 }
 
 // ------------------------------- GET USER ORDERS SERVICE --------------------------------------

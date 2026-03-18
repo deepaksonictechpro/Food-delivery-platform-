@@ -7,12 +7,17 @@ async function registerUser(req, res) {
     const result = await authService.registerUserService(req.body);
 
     res.status(201).json({
+      success: true,
       message: "OTP sent. Verify to complete registration",
       userId: result.userId,
       role: result.role,
     });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error("REGISTER ERROR:", err.message);
+    res.status(400).json({
+      success: false,
+      message: "Registration failed",
+    });
   }
 }
 
@@ -26,11 +31,16 @@ async function verifyUserOtp(req, res) {
     );
 
     res.status(200).json({
+      success: true,
       message: "OTP verified successfully",
       ...result,
     });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error("VERIFY OTP ERROR:", err.message);
+    res.status(400).json({
+      success: false,
+      message: "OTP verification failed",
+    });
   }
 }
 
@@ -41,11 +51,16 @@ async function loginUser(req, res) {
     const result = await authService.loginUserService(req.body);
 
     res.status(200).json({
+      success: true,
       message: "Login successful",
       ...result,
     });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error("LOGIN ERROR:", err.message);
+    res.status(400).json({
+      success: false,
+      message: "Invalid credentials",
+    });
   }
 }
 
@@ -54,9 +69,17 @@ async function loginUser(req, res) {
 async function forgotPassword(req, res) {
   try {
     const result = await authService.forgotPasswordService(req.body.email);
-    res.status(200).json(result);
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error("FORGOT PASSWORD ERROR:", err.message);
+    res.status(400).json({
+      success: false,
+      message: "Failed to process request",
+    });
   }
 }
 
@@ -64,10 +87,21 @@ async function forgotPassword(req, res) {
 
 async function verifyForgotPasswordOtp(req, res) {
   try {
-    const result = await authService.verifyForgotPasswordOtpService(req.body.email, req.body.otp);
-    res.status(200).json(result);
+    const result = await authService.verifyForgotPasswordOtpService(
+      req.body.email,
+      req.body.otp
+    );
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error("VERIFY FORGOT OTP ERROR:", err.message);
+    res.status(400).json({
+      success: false,
+      message: "OTP verification failed",
+    });
   }
 }
 
@@ -75,10 +109,21 @@ async function verifyForgotPasswordOtp(req, res) {
 
 async function resetPassword(req, res) {
   try {
-    const result = await authService.resetPasswordService(req.body.email, req.body.newPassword);
-    res.status(200).json(result);
+    const result = await authService.resetPasswordService(
+      req.body.email,
+      req.body.newPassword
+    );
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error("RESET PASSWORD ERROR:", err.message);
+    res.status(400).json({
+      success: false,
+      message: "Password reset failed",
+    });
   }
 }
 
@@ -87,9 +132,17 @@ async function resetPassword(req, res) {
 async function logoutUser(req, res) {
   try {
     const result = await authService.logoutService();
-    res.status(200).json(result);
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error("LOGOUT ERROR:", err.message);
+    res.status(400).json({
+      success: false,
+      message: "Logout failed",
+    });
   }
 }
 
@@ -106,10 +159,10 @@ async function getUserProfile(req, res) {
       data: user,
     });
   } catch (error) {
-    console.error("GET USER PROFILE ERROR:", error);
+    console.error("GET USER PROFILE ERROR:", error.message);
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to fetch user profile",
     });
   }
 }
@@ -137,10 +190,10 @@ async function updateUserProfile(req, res) {
       data: user,
     });
   } catch (error) {
-    console.error("UPDATE USER PROFILE ERROR:", error);
+    console.error("UPDATE USER PROFILE ERROR:", error.message);
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to update profile",
     });
   }
 }

@@ -18,14 +18,14 @@ router.get("/search", validate(searchFoodSchema, "query"), foodController.search
 // -- Get food partner's own foods --
 
 router.get(
-  "/mine",
+  "/get-food",
   authUserMiddleware,
   authRoleMiddleware(["food_partner"]),
   foodController.getMyFoods
 );
 
 router.post(
-  "/",
+  "/create-food",
   authUserMiddleware,
   authRoleMiddleware(["food_partner"]),
   upload.single("video"),
@@ -48,7 +48,7 @@ router.post(
 );
 
 router.get(
-  "/saved",
+  "/get-saved-foods",
   authUserMiddleware,
   foodController.getSavedFoods
 );

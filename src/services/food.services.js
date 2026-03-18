@@ -10,22 +10,56 @@ const ciLike = (column, value) =>
 //------------------------------- CREATE FOOD ----------------------------------------------
 
 async function createFoodService({ name, description, category, price, file, foodPartnerId }) {
-  if (!name) throw new Error("Food name is required");
-  if (!category) throw new Error("Category is required");
-  if (!price) throw new Error("Price is required");
-  if (!file) throw new Error("Food video is required");
+  if (!name || typeof name !== "string" || !name.trim()) {
+    throw new Error("Food name is required");
+  }
 
-  const existingFood = await Food.findOne({ where: { name } });
-  if (existingFood) throw new Error(`Food with name '${name}' already exists`);
+  if (!category || typeof category !== "string" || !category.trim()) {
+    throw new Error("Category is required");
+  }
 
-  const uploadResult = await storageService.uploadFile(file.buffer, `food-video-${uuid()}`);
+  if (!price || isNaN(price) || Number(price) <= 0) {
+    throw new Error("Valid price is required");
+  }
+
+  if (!file) {
+    throw new Error("Food video is required");
+  }
+
+  if (!file.mimetype || !file.mimetype.startsWith("video/")) {
+    throw new Error("Only video files are allowed");
+  }
+
+  const existingFood = await Food.findOne({ where: { name: name.trim() } });
+  if (existingFood) {
+    throw new Error(`Food with name '${name}' already exists`);
+  }
+
+  const uploadResult = await storageService.uploadFile(
+    file.buffer,
+    `food-video-${uuid()}`
+  );
+
+  if (!uploadResult || !uploadResult.url) {
+    throw new Error("Video upload failed");
+  }
+
+  const videoUrl = uploadResult.url;
+
+  if (typeof videoUrl !== "string" || videoUrl.trim() === "") {
+    throw new Error("Invalid video URL received");
+  }
+
+  if (!videoUrl.startsWith("http")) {
+    throw new Error("Invalid video URL format");
+  }
 
   const food = await Food.create({
-    name,
+    name: name.trim(),
     description,
-    category,
-    price,
-    video: uploadResult.url,
+    category: category.trim(),
+    price: Number(price),
+    video: videoUrl,
     foodPartnerId,
   });
 
