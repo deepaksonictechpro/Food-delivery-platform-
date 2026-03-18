@@ -4,6 +4,7 @@ const addressController = require("../controllers/address.controller");
 const validate = require("../middlewares/validate.middleware");
 const { createAddressSchema, updateAddressSchema } = require("../validations/address.validation");
 const { authUserMiddleware, authRoleMiddleware } = require("../middlewares/auth.middleware");
+const { userdoorimageUpload } = require("../middlewares/upload.middleware");
 
 // ====================================== User Address routes ===================================
 
@@ -11,6 +12,7 @@ router.post(
   "/add-new-address",
   authUserMiddleware,
   authRoleMiddleware(["user"]),
+  userdoorimageUpload.single("doorImage"), 
   validate(createAddressSchema),
   addressController.addAddress
 );
@@ -23,15 +25,16 @@ router.get(
 );
 
 router.patch(
-  "/:id",
+  "/update/:id",
   authUserMiddleware,
   authRoleMiddleware(["user"]),
+  userdoorimageUpload.single("doorImage"), 
   validate(updateAddressSchema),
   addressController.updateAddress
 );
 
 router.delete(
-  "/:id",
+  "/delete/:id",
   authUserMiddleware,
   authRoleMiddleware(["user"]),
   addressController.deleteAddress

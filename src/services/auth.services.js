@@ -8,6 +8,11 @@ function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// Helper: normalize email
+function normalizeEmail(email) {
+  return email.toLowerCase().trim();
+}
+
 //------------------------------- USER REGISTRATION --------------------------------------
 
 async function registerUserService({ fullName, email, password, role, phoneNumber }) {
@@ -17,14 +22,13 @@ async function registerUserService({ fullName, email, password, role, phoneNumbe
   const allowedRoles = ["user", "food_partner", "delivery_partner"];
   if (!allowedRoles.includes(role)) throw new Error("Invalid role");
 
-  const normalizedEmail = email.toLowerCase().trim();
+  const normalizedEmail = normalizeEmail(email);
 
   const existingUser = await User.findOne({ where: { email: normalizedEmail } });
   if (existingUser) throw new Error("User already exists");
 
   const otp = generateOtp();
   const hashedOtp = await bcrypt.hash(otp, 10);
-
   const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
 
   const user = await User.create({
@@ -51,21 +55,26 @@ async function registerUserService({ fullName, email, password, role, phoneNumbe
 async function verifyUserOtpService(email, otp) {
   if (!email || !otp) throw new Error("Email and OTP are required");
 
-  const user = await User.findOne({ where: { email } });
+  const normalizedEmail = normalizeEmail(email);
+
+  const user = await User.findOne({ where: { email: normalizedEmail } });
   if (!user) throw new Error("User not found");
 
   if (!user.otp) throw new Error("OTP not found");
-
-  if (user.otpExpiresAt < new Date()) throw new Error("OTP expired");
-
   if (user.otpAttempts >= 5) throw new Error("Too many attempts");
 
+  // ✅ FIRST verify OTP
   const isValid = await bcrypt.compare(otp, user.otp);
 
   if (!isValid) {
     user.otpAttempts += 1;
     await user.save();
     throw new Error("Invalid OTP");
+  }
+
+  // ✅ THEN check expiry
+  if (user.otpExpiresAt < new Date()) {
+    throw new Error("OTP expired");
   }
 
   user.isOtpVerified = true;
@@ -84,7 +93,9 @@ async function loginUserService({ email, password, role }) {
   if (!email || !password || !role)
     throw new Error("Email, password, and role are required");
 
-  const user = await User.findOne({ where: { email, role } });
+  const normalizedEmail = normalizeEmail(email);
+
+  const user = await User.findOne({ where: { email: normalizedEmail, role } });
   if (!user) throw new Error("Invalid email, password, or role");
 
   if (role !== "admin" && !user.isOtpVerified)
@@ -116,7 +127,9 @@ async function loginUserService({ email, password, role }) {
 async function forgotPasswordService(email) {
   if (!email) throw new Error("Email is required");
 
-  const user = await User.findOne({ where: { email } });
+  const normalizedEmail = normalizeEmail(email);
+
+  const user = await User.findOne({ where: { email: normalizedEmail } });
   if (!user) throw new Error("User not found");
 
   const otp = generateOtp();
@@ -130,7 +143,7 @@ async function forgotPasswordService(email) {
   await user.save();
 
   if (process.env.NODE_ENV === "development") {
-    console.log(`Forgot OTP for ${email}: ${otp}`);
+    console.log(`Forgot OTP for ${normalizedEmail}: ${otp}`);
   }
 
   return { message: "OTP sent for password reset" };
@@ -141,10 +154,12 @@ async function forgotPasswordService(email) {
 async function verifyForgotPasswordOtpService(email, otp) {
   if (!email || !otp) throw new Error("Email and OTP are required");
 
-  const user = await User.findOne({ where: { email } });
+  const normalizedEmail = normalizeEmail(email);
+
+  const user = await User.findOne({ where: { email: normalizedEmail } });
   if (!user) throw new Error("User not found");
 
-  if (user.otpExpiresAt < new Date()) throw new Error("OTP expired");
+  if (user.otpAttempts >= 5) throw new Error("Too many attempts");
 
   const isValid = await bcrypt.compare(otp, user.otp);
 
@@ -152,6 +167,10 @@ async function verifyForgotPasswordOtpService(email, otp) {
     user.otpAttempts += 1;
     await user.save();
     throw new Error("Invalid OTP");
+  }
+
+  if (user.otpExpiresAt < new Date()) {
+    throw new Error("OTP expired");
   }
 
   user.isOtpVerified = true;
@@ -165,7 +184,9 @@ async function verifyForgotPasswordOtpService(email, otp) {
 async function resetPasswordService(email, newPassword) {
   if (!email || !newPassword) throw new Error("Email and new password are required");
 
-  const user = await User.findOne({ where: { email } });
+  const normalizedEmail = normalizeEmail(email);
+
+  const user = await User.findOne({ where: { email: normalizedEmail } });
   if (!user) throw new Error("User not found");
 
   if (!user.isOtpVerified) throw new Error("Please verify OTP first");

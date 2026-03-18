@@ -7,6 +7,8 @@ const createAddressSchema = Joi.object({
   state: Joi.string().min(2).required(),
   zipCode: Joi.string().min(3).required(),
   country: Joi.string().min(2).required(),
+  phoneNumber: Joi.string().min(10).required(),
+  doorImage: Joi.any().optional(),
 });
 
 const updateAddressSchema = Joi.object({
@@ -16,6 +18,8 @@ const updateAddressSchema = Joi.object({
   state: Joi.string().min(2).optional(),
   zipCode: Joi.string().min(3).optional(),
   country: Joi.string().min(2).optional(),
+  phoneNumber: Joi.string().min(10).required(),
+  doorImage: Joi.any().optional(),
 });
 
 module.exports = {

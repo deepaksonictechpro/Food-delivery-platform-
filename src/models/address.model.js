@@ -4,6 +4,8 @@ module.exports = (sequelize, DataTypes) => {
     userId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
     label: { type: DataTypes.STRING, allowNull: false }, 
     address: { type: DataTypes.STRING, allowNull: false },
+    phoneNumber: {type: DataTypes.STRING, allowNull: false},
+    doorImage: {type: DataTypes.STRING, allowNull: true},
     city: { type: DataTypes.STRING, allowNull: false },
     state: { type: DataTypes.STRING, allowNull: false },
     zipCode: { type: DataTypes.STRING, allowNull: false },

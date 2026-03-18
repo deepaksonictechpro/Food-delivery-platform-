@@ -4,7 +4,16 @@ const addressService = require("../services/address.services");
 
 async function addAddress(req, res) {
   try {
-    const address = await addressService.addAddressService(req.user.id, req.body);
+    const doorImage = req.file ? req.file.path : null;
+
+    const address = await addressService.addAddressService(
+      req.user.id,
+      {
+        ...req.body,
+        doorImage,
+      }
+    );
+
     res.status(201).json({ message: "Address added", address });
   } catch (err) {
     console.error("ADD ADDRESS ERROR:", err.message);
@@ -13,20 +22,32 @@ async function addAddress(req, res) {
 }
 
 // --------------------------------- Get User Addresses -------------------------------------
+
 async function getUserAddresses(req, res) {
   try {
     const addresses = await addressService.getUserAddressesService(req.user.id);
     res.status(200).json({ count: addresses.length, addresses });
   } catch (err) {
     console.error("GET ADDRESSES ERROR:", err.message);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Failed to fetch addresses" });
   }
 }
 
 // --------------------------------- Update Address -------------------------------------
+
 async function updateAddress(req, res) {
   try {
-    const address = await addressService.updateAddressService(req.user.id, req.params.id, req.body);
+    const doorImage = req.file ? req.file.path : null;
+
+    const address = await addressService.updateAddressService(
+      req.user.id,
+      req.params.id,
+      {
+        ...req.body,
+        ...(doorImage && { doorImage }),
+      }
+    );
+
     res.status(200).json({ message: "Address updated", address });
   } catch (err) {
     console.error("UPDATE ADDRESS ERROR:", err.message);
@@ -35,6 +56,7 @@ async function updateAddress(req, res) {
 }
 
 //---------------------------------- Delete Address -------------------------------------
+
 async function deleteAddress(req, res) {
   try {
     const result = await addressService.deleteAddressService(req.user.id, req.params.id);

@@ -1,4 +1,4 @@
-const { User, Food, DeliveryOrder } = require("../models");
+const { User, Food, DeliveryOrder} = require("../models");
 const { Op, Sequelize } = require("sequelize");
 
 //------------------------------- FOOD PARTNER DASHBOARD SERVICE --------------------------------------

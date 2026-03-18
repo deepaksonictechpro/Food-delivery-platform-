@@ -30,5 +30,6 @@ const adminUpload = multer({ storage: getStorage("admin"), fileFilter });
 const foodPartnerUpload = multer({ storage: getStorage("food_partner"), fileFilter });
 const userUpload = multer({ storage: getStorage("user"), fileFilter });
 const deliverypartnerUpload = multer({storage: getStorage("delivery_partner"), fileFilter});
+const userdoorimageUpload = multer({ storage: getStorage("door_image"), fileFilter});
 
-module.exports = { adminUpload, foodPartnerUpload, userUpload, deliverypartnerUpload };
+module.exports = { adminUpload, foodPartnerUpload, userUpload, deliverypartnerUpload, userdoorimageUpload };

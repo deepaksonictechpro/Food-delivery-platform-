@@ -1,7 +1,7 @@
-// src/services/DeliveryOrders.services.js
-const { DeliveryOrder, Food, User } = require("../models");
+const { sequelize } = require("../models");
+const { DeliveryOrder, Food, User, Cart } = require("../models");
 const { PER_DELIVERY_EARNING } = require("../constants/delivery.constants");
-const { removeFromCartService } = require("./cart.services");
+const { ORDER_STATUS } = require("../constants/orderStatus.constants");
 
 //------------------------------- CLEAN ORDER RESPONSE --------------------------------------
 
@@ -25,10 +25,11 @@ function cleanOrderResponse(order) {
           video: order.food.video,
         }
       : undefined,
-    user: order.user ? { id: order.user.id, fullName: order.user.fullName } : undefined,
+    user: order.user
+      ? { id: order.user.id, fullName: order.user.fullName }
+      : undefined,
   };
 
-  // Include cancel info only if a cancellation was requested
   if (order.cancelRequestedAt) {
     response.cancelReason = order.cancelReason;
     response.cancelRequestedAt = order.cancelRequestedAt;
@@ -51,19 +52,42 @@ async function placeOrderService(userId, cartItems, address, paymentMethod) {
   const transaction = await sequelize.transaction();
 
   try {
-    const orderData = cartItems.map((item) => {
+    const orderData = [];
+
+    for (const item of cartItems) {
       if (!item.foodId) throw new Error("Cart item missing foodId");
 
-      return {
+      let quantity = parseInt(item.quantity);
+
+      if (isNaN(quantity) || quantity < 1) {
+        throw new Error("Invalid quantity. Must be at least 1");
+      }
+
+      if (quantity > 10) {
+        throw new Error("Maximum 10 items allowed per order");
+      }
+
+      const food = await Food.findOne({
+        where: { id: item.foodId },
+        transaction,
+      });
+
+      if (!food) throw new Error("Food item not found");
+
+      if (!food.isAvailable) {
+        throw new Error(`${food.name} is currently unavailable`);
+      }
+
+      orderData.push({
         foodId: item.foodId,
         userId,
-        quantity: item.quantity,
+        quantity,
         address,
         paymentMethod,
         status: ORDER_STATUS.PENDING,
         earning: 0,
-      };
-    });
+      });
+    }
 
     const createdOrders = await DeliveryOrder.bulkCreate(orderData, {
       transaction,
@@ -113,7 +137,10 @@ async function getUserOrdersService(userId) {
 
 async function getAvailableOrdersService() {
   const orders = await DeliveryOrder.findAll({
-    where: { deliveryPartnerId: null, status: "pending" },
+    where: {
+      deliveryPartnerId: null,
+      status: ORDER_STATUS.PENDING,
+    },
     include: [
       { model: Food, as: "food" },
       { model: User, as: "user", attributes: ["id", "fullName"] },
@@ -129,7 +156,11 @@ async function acceptOrderService(orderId, deliveryPartnerId) {
   await checkDeliveryPartnerProfile(deliveryPartnerId);
 
   const order = await DeliveryOrder.findOne({
-    where: { id: orderId, status: ORDER_STATUS.PENDING, deliveryPartnerId: null },
+    where: {
+      id: orderId,
+      status: ORDER_STATUS.PENDING,
+      deliveryPartnerId: null,
+    },
     include: [
       { model: Food, as: "food" },
       { model: User, as: "user", attributes: ["id", "fullName"] },
@@ -140,6 +171,7 @@ async function acceptOrderService(orderId, deliveryPartnerId) {
 
   order.deliveryPartnerId = deliveryPartnerId;
   order.status = ORDER_STATUS.ACCEPTED;
+
   await order.save();
 
   return cleanOrderResponse(order);
@@ -163,7 +195,14 @@ async function getAssignedDeliveriesService(deliveryPartnerId) {
 // ------------------------------- UPDATE DELIVERY STATUS SERVICE --------------------------------------
 
 async function updateDeliveryStatusService(orderId, deliveryPartnerId, status) {
-  if (!["picked", "delivered"].includes(status)) throw new Error("Invalid status");
+  if (
+    ![
+      ORDER_STATUS.PICKED_UP,
+      ORDER_STATUS.DELIVERED,
+    ].includes(status)
+  ) {
+    throw new Error("Invalid status");
+  }
 
   const order = await DeliveryOrder.findOne({
     where: { id: orderId, deliveryPartnerId },
@@ -176,7 +215,10 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status) {
   if (!order) throw new Error("Order not found");
 
   order.status = status;
-  if (status === "delivered") order.earning = PER_DELIVERY_EARNING;
+
+  if (status === ORDER_STATUS.DELIVERED) {
+    order.earning = PER_DELIVERY_EARNING;
+  }
 
   await order.save();
 
@@ -186,13 +228,12 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status) {
 // ------------------------------- DELIVERY PARTNER PROFILE CHECK --------------------------------------
 
 async function checkDeliveryPartnerProfile(deliveryPartnerId) {
-
   const partner = await User.findOne({
     where: {
       id: deliveryPartnerId,
       role: "delivery_partner",
-      status: "active"
-    }
+      status: "active",
+    },
   });
 
   if (!partner) {

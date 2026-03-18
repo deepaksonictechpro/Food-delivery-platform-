@@ -44,7 +44,7 @@ async function updateDeliveryPartnerProfile(req, res) {
     };
 
     if (req.file) {
-      data.profileImage = `/uploads/delivery_partner/${req.file.filename}`;
+      data.profileImage = req.file.path;
     }
 
     const partner = await deliveryPartnerService.updateDeliveryPartnerProfile(partnerId, data);

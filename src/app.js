@@ -15,7 +15,7 @@ const deliveryOrderRoutes = require("./routes/DeliveryOrders.routes");
 const adminRoutes = require("./routes/admin.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const ordercancelRoutes = require("./routes/orderCancellation.routes");
-const cardRoutes = require("./routes/cart.routes");
+const cartRoutes = require("./routes/cart.routes");
 const addressRoutes = require("./routes/address.routes");
 const deliveryPartnerRoutes = require("./routes/delivery_partner.routes");
 
@@ -39,13 +39,13 @@ app.get("/", (req, res) => res.send("API running"));
 // ====== API Routes ======
 app.use("/api/auth", authRoutes);
 app.use("/api/foods", foodRoutes);
-app.use("/api/food-partners", foodPartnerRoutes);
+app.use("/api/food-partner", foodPartnerRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/delivery", deliveryOrderRoutes);
-app.use("/api/placeOrder", ordercancelRoutes);
-app.use("/api/card", cardRoutes);
+app.use("/api/Orders", ordercancelRoutes);
+app.use("/api/cart", cartRoutes);
 app.use("/api/address", addressRoutes);
-app.use("/api/Delivery_partner", deliveryPartnerRoutes);
+app.use("/api/Delivery-partner", deliveryPartnerRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
 

@@ -5,16 +5,16 @@ const {authUserMiddleware, authAdminMiddleware, authRoleMiddleware} = require(".
 
 // --------------------------------- FOOD PARTNER DASHBOARD -----------------------------------
 
-router.get(
-  "/partner",
-  authUserMiddleware,
+router.get("/food-partner", 
+  authUserMiddleware, 
+  authRoleMiddleware(["food_partner"]), 
   dashboardController.getFoodPartnerDashboard
 );
 
 // ------------------------------------ ADMIN DASHBOARD ----------------------------------------
 
 router.get(
-  "/admin/stats",
+  "/admin",
   authAdminMiddleware,
   dashboardController.getAdminDashboardStats
 );

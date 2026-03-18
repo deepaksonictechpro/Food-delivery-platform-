@@ -1,5 +1,6 @@
 const { User, Food } = require("../models");
 const jwt = require('jsonwebtoken');
+const bcrypt = require("bcrypt");
 
 //------------------------------- CREATE ADMIN (ONE TIME ONLY)--------------------------------------
 

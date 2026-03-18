@@ -18,10 +18,8 @@ async function createFoodService({ name, description, category, price, file, foo
   const existingFood = await Food.findOne({ where: { name } });
   if (existingFood) throw new Error(`Food with name '${name}' already exists`);
 
-  // Upload video
   const uploadResult = await storageService.uploadFile(file.buffer, `food-video-${uuid()}`);
 
-  // Create food
   const food = await Food.create({
     name,
     description,
