@@ -30,6 +30,7 @@ async function registerUserService({ fullName, email, password, role, phoneNumbe
   const otp = generateOtp();
   const hashedOtp = await bcrypt.hash(otp, 10);
   const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
+  console.log("OTP for Register - ", otp);
 
   const user = await User.create({
     fullName,
@@ -63,7 +64,6 @@ async function verifyUserOtpService(email, otp) {
   if (!user.otp) throw new Error("OTP not found");
   if (user.otpAttempts >= 5) throw new Error("Too many attempts");
 
-  // ✅ FIRST verify OTP
   const isValid = await bcrypt.compare(otp, user.otp);
 
   if (!isValid) {
@@ -72,7 +72,6 @@ async function verifyUserOtpService(email, otp) {
     throw new Error("Invalid OTP");
   }
 
-  // ✅ THEN check expiry
   if (user.otpExpiresAt < new Date()) {
     throw new Error("OTP expired");
   }
@@ -134,6 +133,7 @@ async function forgotPasswordService(email) {
 
   const otp = generateOtp();
   const hashedOtp = await bcrypt.hash(otp, 10);
+  console.log("Reset password OTP - ", otp);
 
   user.otp = hashedOtp;
   user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
