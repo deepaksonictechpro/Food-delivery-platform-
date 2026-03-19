@@ -1,4 +1,5 @@
 const { Address } = require("../models");
+const { deleteFile } = require("../utils/fileHandler");
 
 //--------------------------------- ADD NEW ADDRESS --------------------------------------
 async function addAddressService(userId, data) {
@@ -14,43 +15,57 @@ async function getUserAddressesService(userId) {
   });
 }
 
+
 //------------------------------- UPDATE ADDRESS --------------------------------------
 
-async function updateAddressService(userId, addressId, data) {
-  const address = await Address.findOne({
-    where: { id: addressId, userId },
-  });
+async function updateAddressService(userId, addressId, data, file) {
+  let uploadedFilePath = file ? file.path : null;
 
-  if (!address) throw new Error("Address not found");
+  try {
+    const address = await Address.findOne({
+      where: { id: Number(addressId), userId },
+    });
 
-  if (data.label !== undefined) address.label = data.label;
-
-  if (data.address !== undefined) {
-    if (!data.address || !data.address.trim()) {
-      throw new Error("Address cannot be empty");
+    if (!address) {
+      throw new Error("Address not found");
     }
-    address.address = data.address.trim();
-  }
 
-  if (data.city !== undefined) address.city = data.city;
-  if (data.state !== undefined) address.state = data.state;
-  if (data.zipCode !== undefined) address.zipCode = data.zipCode;
+    if (data.label !== undefined) address.label = data.label;
 
-  if (data.phoneNumber !== undefined) {
-    if (!data.phoneNumber.trim()) {
-      throw new Error("Phone number cannot be empty");
+    if (data.address !== undefined) {
+      if (!data.address.trim()) {
+        throw new Error("Address cannot be empty");
+      }
+      address.address = data.address.trim();
     }
-    address.phoneNumber = data.phoneNumber;
+
+    if (data.city !== undefined) address.city = data.city;
+    if (data.state !== undefined) address.state = data.state;
+    if (data.zipCode !== undefined) address.zipCode = data.zipCode;
+
+    if (data.phoneNumber !== undefined) {
+      if (!data.phoneNumber.trim()) {
+        throw new Error("Phone number cannot be empty");
+      }
+      address.phoneNumber = data.phoneNumber;
+    }
+
+    if (file) {
+      deleteFile(address.doorImage);
+      address.doorImage = uploadedFilePath;
+    }
+
+    await address.save();
+
+    return address;
+
+  } catch (error) {
+    deleteFile(uploadedFilePath);
+    throw error;
   }
-
-  if (data.doorImage !== undefined) {
-    address.doorImage = data.doorImage;
-  }
-
-  await address.save();
-
-  return address;
 }
+
+
 //------------------------------- DELETE ADDRESS --------------------------------------
 async function deleteAddressService(userId, addressId) {
   const address = await Address.findOne({
