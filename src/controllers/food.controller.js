@@ -65,7 +65,12 @@ async function saveFood(req, res) {
 async function getSavedFoods(req, res) {
   try {
     const savedFoods = await foodService.getSavedFoodsService(req.user.id);
-    res.status(200).json({ message: "Saved foods fetched", savedFoods });
+
+    res.status(200).json({
+      message: "Saved foods fetched",
+      count: savedFoods.length,
+      savedFoods,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -115,6 +120,24 @@ async function getFoodOrders(req, res) {
   }
 }
 
+
+//------------------------------- ADD SAVED ITEM TO CART ----------------------------------------------
+
+async function addSavedToCart(req, res) {
+  try {
+    const result = await foodService.addSavedToCartService({
+      userId: req.user.id,
+      foodId: req.body.foodId,
+    });
+
+    res.status(200).json({
+      message: "Item added to cart from wishlist",
+      result,
+    });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+}
 module.exports = {
   createFood,
   getMyFoods,
@@ -126,4 +149,5 @@ module.exports = {
   updateFood,
   deleteFood,
   getFoodOrders,
+  addSavedToCart,
 };

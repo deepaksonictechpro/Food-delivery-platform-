@@ -3,6 +3,7 @@ const multer = require("multer");
 const foodController = require("../controllers/food.controller");
 const { authUserMiddleware, authRoleMiddleware } = require("../middlewares/auth.middleware");
 const validate = require("../middlewares/validate.middleware");
+const { addSavedToCartSchema } = require("../validations/food.validation");
 
 const {
   createFoodSchema,
@@ -15,7 +16,7 @@ const upload = multer();
 
 router.get("/search", validate(searchFoodSchema, "query"), foodController.searchFoods);
 
-// -- Get food partner's own foods --
+// ------ Get food partner's own foods --------
 
 router.get(
   "/get-food",
@@ -33,6 +34,7 @@ router.post(
   foodController.createFood
 );
 
+// ---- FOR USER USE ---------------
 router.post(
   "/like",
   authUserMiddleware,
@@ -53,5 +55,11 @@ router.get(
   foodController.getSavedFoods
 );
 
+router.post(
+  "/saved-to-cart",
+  authUserMiddleware,
+  validate(addSavedToCartSchema),
+  foodController.addSavedToCart
+);
 
 module.exports = router;

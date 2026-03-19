@@ -1,4 +1,4 @@
-const { Food, User, Like, Save } = require("../models");
+const { Food, User, Like, Save, Cart } = require("../models");
 const storageService = require("./storage.service");
 const { v4: uuid } = require("uuid");
 const { Op, Sequelize } = require("sequelize");
@@ -124,16 +124,23 @@ async function saveFoodService({ userId, foodId }) {
 //------------------------------- GET SAVED FOODS ----------------------------------------------
 
 async function getSavedFoodsService(userId) {
-  const savedFoods = await Save.findAll({
+  const savedItems = await Save.findAll({
     where: { userId },
     include: [
       {
         model: Food,
-        include: [{ model: User, as: "foodPartner", attributes: ["id", "fullName"] }],
+        include: [
+          {
+            model: User,
+            as: "foodPartner",
+            attributes: ["id", "fullName"],
+          },
+        ],
       },
     ],
   });
-  return savedFoods;
+
+  return savedItems.map((item) => item.Food);
 }
 
 //------------------------------- SEARCH FOODS ----------------------------------------------
@@ -191,6 +198,36 @@ async function deleteFoodService(foodId, foodPartnerId) {
   return true;
 }
 
+//-------------------------------- ADD SAVED TO CART SERVICES -----------------------------------
+
+async function addSavedToCartService({ userId, foodId }) {
+  const savedItem = await Save.findOne({
+    where: { userId, foodId },
+  });
+
+  if (!savedItem) {
+    throw new Error("Food is not in wishlist");
+  }
+
+  const existingCart = await Cart.findOne({
+    where: { userId, foodId },
+  });
+
+  if (existingCart) {
+    existingCart.quantity += 1;
+    await existingCart.save();
+    return existingCart;
+  }
+
+  const cartItem = await Cart.create({
+    userId,
+    foodId,
+    quantity: 1,
+  });
+
+  return cartItem;
+}
+
 module.exports = {
   createFoodService,
   getMyFoodsService,
@@ -201,4 +238,5 @@ module.exports = {
   searchFoodsService,
   updateFoodService,
   deleteFoodService,
+  addSavedToCartService,
 };
