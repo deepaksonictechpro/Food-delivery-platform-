@@ -1,3 +1,4 @@
+console.log("✅ Delivery Orders Routes Loaded");
 const express = require("express");
 const router = express.Router();
 const deliveryController = require("../controllers/DeliveryOrders.controller");
@@ -15,7 +16,7 @@ const {
 // ===================================== USER DELIVERY API ===========================================
 
 router.post(
-  "/order",
+  "/place-order",
   authUserMiddleware,
   authRoleMiddleware(["user"]),
   validate(placeOrderSchema), 

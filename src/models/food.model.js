@@ -53,7 +53,18 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
+
+      averageRating: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0,
+      },
+
+      totalReviews: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
     },
+
     {
       tableName: "foods",
       timestamps: true,
@@ -72,6 +83,14 @@ module.exports = (sequelize, DataTypes) => {
     // Likes & Saves
     if (models.Like) Food.hasMany(models.Like, { foreignKey: "foodId" });
     if (models.Save) Food.hasMany(models.Save, { foreignKey: "foodId" });
+
+    if (models.Review) {
+      Food.hasMany(models.Review, {
+        foreignKey: "foodId",
+        as: "reviews",
+        onDelete: "CASCADE",
+    });
+  }
 
     // Food → Delivery Orders
     Food.hasMany(models.DeliveryOrder, {

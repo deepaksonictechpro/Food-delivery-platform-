@@ -18,6 +18,7 @@ const ordercancelRoutes = require("./routes/orderCancellation.routes");
 const cartRoutes = require("./routes/cart.routes");
 const addressRoutes = require("./routes/address.routes");
 const deliveryPartnerRoutes = require("./routes/delivery_partner.routes");
+const reviewRoutes = require("./routes/review.routes");
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/Delivery-partner", deliveryPartnerRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/review", reviewRoutes);
 
 
 app.use((req, res) => {

@@ -200,13 +200,29 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status) {
 
   if (status === ORDER_STATUS.DELIVERED) {
     order.earning = PER_DELIVERY_EARNING;
+
+    await User.increment(
+      {
+        earnings: PER_DELIVERY_EARNING,
+        totalDeliveries: 1,
+      },
+      {
+        where: { id: deliveryPartnerId },
+      }
+    );
   }
 
   await order.save();
 
-  return cleanOrderResponse(order);
-}
+  const updatedOrder = await DeliveryOrder.findByPk(orderId, {
+    include: [
+      { model: Food, as: "food" },
+      { model: User, as: "user", attributes: ["id", "fullName"] },
+    ],
+  });
 
+  return cleanOrderResponse(updatedOrder);
+}
 // ------------------------------- DELIVERY PARTNER PROFILE CHECK --------------------------------------
 
 async function checkDeliveryPartnerProfile(deliveryPartnerId) {

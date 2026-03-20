@@ -9,6 +9,7 @@ db.Save = require("./save.model")(sequelize, DataTypes);
 db.DeliveryOrder = require("./DeliveryOrder.model")(sequelize, DataTypes);
 db.Cart = require("./Cart.model")(sequelize, DataTypes);
 db.Address = require("./address.model")(sequelize, DataTypes);
+db.Review = require("./review.model")(sequelize, DataTypes);
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;

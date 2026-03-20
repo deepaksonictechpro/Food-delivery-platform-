@@ -124,6 +124,15 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
 
+    if (models.Review) {
+      User.hasMany(models.Review, {
+        foreignKey: "userId",
+        as: "reviews",
+        constraints: true,
+        onDelete: "CASCADE"
+      });
+    }    
+
     // Orders placed by user
     if (models.DeliveryOrder) {
       User.hasMany(models.DeliveryOrder, {
