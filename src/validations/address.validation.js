@@ -18,7 +18,7 @@ const updateAddressSchema = Joi.object({
   state: Joi.string().min(2).optional(),
   zipCode: Joi.string().min(3).optional(),
   country: Joi.string().min(2).optional(),
-  phoneNumber: Joi.string().min(10).required(),
+  phoneNumber: Joi.string().min(10).optional(),
   doorImage: Joi.any().optional(),
 });
 

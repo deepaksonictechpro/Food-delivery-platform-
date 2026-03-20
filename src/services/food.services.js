@@ -14,6 +14,10 @@ async function createFoodService({ name, description, category, price, file, foo
     throw new Error("Food name is required");
   }
 
+  if (!description || typeof description !== "string" || description.length < 5) {
+    throw new Error("Description must be at least 5 characters");
+  }
+
   if (!category || typeof category !== "string" || !category.trim()) {
     throw new Error("Category is required");
   }
