@@ -1,4 +1,4 @@
-const { FoodPartnerReview, DeliveryOrder, Food, User } = require("../models");
+const { FoodPartnerReviews, DeliveryOrder, Food, User } = require("../models");
 const { ORDER_STATUS } = require("../constants/orderStatus.constants");
 
 // ================= CREATE REVIEW =================
@@ -31,7 +31,7 @@ async function createPartnerReviewService({ userId, foodPartnerId, rating, revie
     throw new Error("You can only review partners you ordered from");
   }
 
-  const newReview = await FoodPartnerReview.create({
+  const newReview = await FoodPartnerReviews.create({
     userId,
     foodPartnerId,
     rating,
@@ -43,7 +43,7 @@ async function createPartnerReviewService({ userId, foodPartnerId, rating, revie
 
 // ================= GET REVIEWS =================
 async function getPartnerReviewsService(foodPartnerId) {
-  return await FoodPartnerReview.findAll({
+  return await FoodPartnerReviews.findAll({
     where: { foodPartnerId },
     include: [
       {
@@ -58,7 +58,7 @@ async function getPartnerReviewsService(foodPartnerId) {
 
 // ================= DELETE REVIEW =================
 async function deletePartnerReviewService({ userId, reviewId }) {
-  const review = await FoodPartnerReview.findOne({
+  const review = await FoodPartnerReviews.findOne({
     where: { id: reviewId, userId },
   });
 
