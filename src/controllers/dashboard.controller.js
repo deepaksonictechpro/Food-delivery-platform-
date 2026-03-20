@@ -1,7 +1,6 @@
 const dashboardService = require("../services/dashboard.services");
 
-//------------------------------- FOOD PARTNER DASHBOARD CONTROLLER --------------------------------------
-
+// FOOD PARTNER DASHBOARD
 async function getFoodPartnerDashboard(req, res) {
   try {
     const data = await dashboardService.fetchFoodPartnerDashboard(req.user.id);
@@ -12,8 +11,7 @@ async function getFoodPartnerDashboard(req, res) {
   }
 }
 
-//------------------------------- ADMIN DASHBOARD CONTROLLER --------------------------------------
-
+// ADMIN DASHBOARD
 async function getAdminDashboardStats(req, res) {
   try {
     const data = await dashboardService.fetchAdminDashboardStats();
@@ -24,8 +22,7 @@ async function getAdminDashboardStats(req, res) {
   }
 }
 
-//------------------------------- DELIVERY PARTNER DASHBOARD CONTROLLER --------------------------------------
-
+// DELIVERY PARTNER DASHBOARD
 async function getDeliveryPartnerDashboard(req, res) {
   try {
     const data = await dashboardService.fetchDeliveryPartnerDashboard(req.user.id);

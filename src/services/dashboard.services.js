@@ -1,10 +1,9 @@
-const { User, Food, DeliveryOrder} = require("../models");
+const { User, Food, DeliveryOrder, Review } = require("../models");
 const { Op, Sequelize } = require("sequelize");
 
 //------------------------------- FOOD PARTNER DASHBOARD SERVICE --------------------------------------
 
 async function fetchFoodPartnerDashboard(foodPartnerId) {
-  // Total orders
   const totalOrders = await DeliveryOrder.count({
     include: [
       {
@@ -15,7 +14,6 @@ async function fetchFoodPartnerDashboard(foodPartnerId) {
     ],
   });
 
-  // Total revenue (delivered orders)
   const totalRevenueData = await DeliveryOrder.findAll({
     include: [
       {
@@ -33,7 +31,6 @@ async function fetchFoodPartnerDashboard(foodPartnerId) {
   });
   const totalRevenue = totalRevenueData[0].totalRevenue || 0;
 
-  // Best-selling foods
   const bestSellingFoods = await DeliveryOrder.findAll({
     include: [
       {
@@ -51,22 +48,41 @@ async function fetchFoodPartnerDashboard(foodPartnerId) {
     order: [[Sequelize.literal("orderCount"), "DESC"]],
   });
 
-  // Total foods uploaded
   const totalFoods = await Food.count({ where: { foodPartnerId } });
 
-  return { totalOrders, totalRevenue, totalFoods, bestSellingFoods };
+  const foods = await Food.findAll({
+    where: { foodPartnerId },
+    attributes: ["id", "name"],
+    raw: true,
+  });
+
+  const foodReviewStats = await Promise.all(
+    foods.map(async (food) => {
+      const stats = await Review.findOne({
+        where: { foodId: food.id },
+        attributes: [
+          [Sequelize.fn("COUNT", Sequelize.col("id")), "reviewCount"],
+          [Sequelize.fn("AVG", Sequelize.col("rating")), "averageRating"],
+        ],
+        raw: true,
+      });
+
+      return {
+        foodId: food.id,
+        foodName: food.name,
+        reviewCount: parseInt(stats.reviewCount, 10),
+        averageRating: stats.averageRating ? parseFloat(stats.averageRating).toFixed(2) : null,
+      };
+    })
+  );
+
+  return { totalOrders, totalRevenue, totalFoods, bestSellingFoods, foodReviewStats };
 }
 
 //------------------------------- ADMIN DASHBOARD SERVICE --------------------------------------
 
 async function fetchAdminDashboardStats() {
-  const [
-    totalUsers,
-    totalFoods,
-    foodPartners,
-    deliveryPartners,
-    totalOrders,
-  ] = await Promise.all([
+  const [totalUsers, totalFoods, foodPartners, deliveryPartners, totalOrders] = await Promise.all([
     User.count(),
     Food.count(),
     User.count({ where: { role: "food_partner" } }),
@@ -74,16 +90,30 @@ async function fetchAdminDashboardStats() {
     DeliveryOrder.count(),
   ]);
 
-  return { totalUsers, totalFoods, foodPartners, deliveryPartners, totalOrders };
+  const reviewStats = await Review.findOne({
+    attributes: [
+      [Sequelize.fn("COUNT", Sequelize.col("id")), "totalReviews"],
+      [Sequelize.fn("AVG", Sequelize.col("rating")), "averageRating"],
+    ],
+    raw: true,
+  });
+
+  return {
+    totalUsers,
+    totalFoods,
+    foodPartners,
+    deliveryPartners,
+    totalOrders,
+    totalReviews: parseInt(reviewStats.totalReviews, 10),
+    averageRating: reviewStats.averageRating ? parseFloat(reviewStats.averageRating).toFixed(2) : null,
+  };
 }
 
 //------------------------------- DELIVERY PARTNER DASHBOARD SERVICE --------------------------------------
 
 async function fetchDeliveryPartnerDashboard(deliveryPartnerId) {
-  // Total deliveries
   const totalDeliveries = await DeliveryOrder.count({ where: { deliveryPartnerId } });
 
-  // Total earnings
   const totalEarningsData = await DeliveryOrder.findAll({
     where: { deliveryPartnerId, status: "delivered" },
     attributes: [[Sequelize.fn("SUM", Sequelize.col("earning")), "totalEarnings"]],
@@ -91,14 +121,12 @@ async function fetchDeliveryPartnerDashboard(deliveryPartnerId) {
   });
   const totalEarnings = totalEarningsData[0].totalEarnings || 0;
 
-  // Today's deliveries
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
   const todayDeliveries = await DeliveryOrder.count({
     where: { deliveryPartnerId, status: "delivered", createdAt: { [Op.gte]: startOfToday } },
   });
 
-  // Average delivery time in minutes
   const avgTimeData = await DeliveryOrder.findAll({
     where: { deliveryPartnerId, status: "delivered" },
     attributes: [[Sequelize.fn("AVG", Sequelize.literal("TIMESTAMPDIFF(SECOND, createdAt, updatedAt)")), "avgSeconds"]],
