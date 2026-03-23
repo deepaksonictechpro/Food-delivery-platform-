@@ -1,5 +1,5 @@
 const authService = require("../services/auth.services");
-
+const { updateFoodPartnerTimingService } = require("../services/auth.services");
 //-------------------------------- REGISTER -------------------------------------
 
 async function registerUser(req, res) {
@@ -198,6 +198,35 @@ async function updateUserProfile(req, res) {
   }
 }
 
+//---------------------- UPDATE FOOD PARTNER TIMING -------------------------------
+
+async function updateFoodPartnerTiming(req, res) {
+  try {
+    const user = await updateFoodPartnerTimingService(req.user.id, req.body);
+
+    const responseData = {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      openingTime: user.openingTime,
+      closingTime: user.closingTime,
+    };
+
+    res.status(200).json({
+      success: true,
+      message: "Food partner timing updated successfully",
+      data: responseData,
+    });
+  } catch (error) {
+    console.error("[UpdateFoodPartnerTiming]", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
 module.exports = {
   registerUser,
   verifyUserOtp,
@@ -208,4 +237,5 @@ module.exports = {
   logoutUser,
   getUserProfile,
   updateUserProfile,
+  updateFoodPartnerTiming,
 };

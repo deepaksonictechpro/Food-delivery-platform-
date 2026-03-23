@@ -2,6 +2,7 @@ const { sequelize } = require("../models");
 const { DeliveryOrder, Food, User, Cart } = require("../models");
 const { PER_DELIVERY_EARNING } = require("../constants/delivery.constants");
 const { ORDER_STATUS } = require("../constants/orderStatus.constants");
+const { getFoodPartnerStatus } = require("../utils/foodPartnerStatus");
 
 //------------------------------- CLEAN ORDER RESPONSE --------------------------------------
 
@@ -50,6 +51,33 @@ async function placeOrderService(userId, cartItems, address, paymentMethod) {
   }
 
   return await sequelize.transaction(async (transaction) => {
+
+    const foodIds = cartItems.map(item => item.foodId);
+
+    const foods = await Food.findAll({
+      where: { id: foodIds },
+      include: [
+        {
+          model: User,
+          as: "foodPartner",
+          attributes: ["openingTime", "closingTime"],
+        },
+      ],
+      transaction,
+    });
+
+    // CHECK FOOD PARTNER STATUS
+    for (const food of foods) {
+      const status = getFoodPartnerStatus(
+        food.foodPartner?.openingTime,
+        food.foodPartner?.closingTime
+      );
+
+      if (status === "CLOSED") {
+        throw new Error(`Food Partner for "${food.name}" is currently closed`);
+      }
+    }
+
     const orderData = cartItems.map((item) => {
       if (!item.foodId) throw new Error("Cart item missing foodId");
 
@@ -73,17 +101,8 @@ async function placeOrderService(userId, cartItems, address, paymentMethod) {
       returning: true,
     });
 
-    if (!createdOrders.length) {
-      throw new Error("Failed to create orders");
-    }
-
-    const foodIds = cartItems.map((item) => item.foodId);
-
     const deletedCount = await Cart.destroy({
-      where: {
-        userId,
-        foodId: foodIds,
-      },
+      where: { userId, foodId: foodIds },
       transaction,
     });
 
@@ -92,9 +111,7 @@ async function placeOrderService(userId, cartItems, address, paymentMethod) {
     }
 
     const ordersWithDetails = await DeliveryOrder.findAll({
-      where: {
-        id: createdOrders.map((o) => o.id),
-      },
+      where: { id: createdOrders.map(o => o.id) },
       include: [{ model: Food, as: "food" }],
       transaction,
     });

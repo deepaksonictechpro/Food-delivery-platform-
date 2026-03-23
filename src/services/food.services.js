@@ -2,6 +2,7 @@ const { Food, User, Like, Save, Cart } = require("../models");
 const storageService = require("./storage.service");
 const { v4: uuid } = require("uuid");
 const { Op, Sequelize } = require("sequelize");
+const { getFoodPartnerStatus } = require("../utils/foodPartnerStatus");
 
 // Helper: case-insensitive LIKE
 const ciLike = (column, value) =>
@@ -75,22 +76,55 @@ async function createFoodService({ name, description, category, price, file, foo
 async function getMyFoodsService(foodPartnerId) {
   const foodItems = await Food.findAll({
     where: { foodPartnerId },
-    include: [{ model: User, as: "foodPartner", attributes: ["id", "fullName", "email"] }],
+    include: [
+      {
+        model: User,
+        as: "foodPartner",
+        attributes: ["id", "fullName", "email", "openingTime", "closingTime"],
+      },
+    ],
     order: [["createdAt", "DESC"]],
   });
-  return foodItems;
+
+  return foodItems.map(food => {
+    const data = food.toJSON();
+
+    return {
+      ...data,
+      foodPartnerStatus: getFoodPartnerStatus(
+        data.foodPartner?.openingTime,
+        data.foodPartner?.closingTime
+      ),
+    };
+  });
 }
 
 //------------------------------- GET ALL FOODS ----------------------------------------------
 
 async function getAllFoodsService() {
   const foods = await Food.findAll({
-    include: [{ model: User, as: "foodPartner", attributes: ["id", "fullName", "email"] }],
+    include: [
+      {
+        model: User,
+        as: "foodPartner",
+        attributes: ["id", "fullName", "email", "openingTime", "closingTime"],
+      },
+    ],
     order: [["createdAt", "DESC"]],
   });
-  return foods;
-}
 
+  return foods.map(food => {
+    const data = food.toJSON();
+
+    return {
+      ...data,
+      foodPartnerStatus: getFoodPartnerStatus(
+        data.foodPartner?.openingTime,
+        data.foodPartner?.closingTime
+      ),
+    };
+  });
+}
 //------------------------------- LIKE/UNLIKE FOOD ----------------------------------------------
 
 async function likeFoodService({ userId, foodId }) {
@@ -155,7 +189,10 @@ async function searchFoodsService({ query, category, partner }) {
   if (query) {
     foodWhere[Op.or] = [
       ciLike("name", query),
-      Sequelize.where(Sequelize.fn("SOUNDEX", Sequelize.col("name")), Sequelize.fn("SOUNDEX", query)),
+      Sequelize.where(
+        Sequelize.fn("SOUNDEX", Sequelize.col("name")),
+        Sequelize.fn("SOUNDEX", query)
+      ),
     ];
   }
 
@@ -167,7 +204,7 @@ async function searchFoodsService({ query, category, partner }) {
     {
       model: User,
       as: "foodPartner",
-      attributes: ["id", "fullName", "email"],
+      attributes: ["id", "fullName", "email", "openingTime", "closingTime"],
       ...(partner ? { where: ciLike("fullName", partner) } : {}),
     },
   ];
@@ -178,7 +215,17 @@ async function searchFoodsService({ query, category, partner }) {
     order: [["createdAt", "DESC"]],
   });
 
-  return foods;
+  return foods.map(food => {
+    const data = food.toJSON();
+
+    return {
+      ...data,
+      foodPartnerStatus: getFoodPartnerStatus(
+        data.foodPartner?.openingTime,
+        data.foodPartner?.closingTime
+      ),
+    };
+  });
 }
 
 //------------------------------- UPDATE FOOD ----------------------------------------------

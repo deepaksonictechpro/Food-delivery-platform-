@@ -21,6 +21,7 @@ const {
   verifyForgotOtpSchema,
   resetPasswordSchema,
   updateUserProfileSchema,
+  updateFoodPartnerTimingSchema,
 } = require("../validations/auth.validation");
 
 const router = express.Router();
@@ -91,5 +92,16 @@ router.put(
   validate(updateUserProfileSchema),
   authController.updateUserProfile
 );
+
+
+// ---------------Food Partner Timing Update--------
+router.patch(
+  "/update-timing",
+  authUserMiddleware,
+  authRoleMiddleware(["food_partner"]),
+  validate(updateFoodPartnerTimingSchema),
+  authController.updateFoodPartnerTiming
+);
+
 
 module.exports = router;

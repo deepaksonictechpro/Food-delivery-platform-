@@ -201,6 +201,25 @@ async function resetPasswordService(email, newPassword) {
   return { message: "Password reset successfully" };
 }
 
+//------------------------- UPDATE FOOD PARTNER TIMING SERVICE -----------------------
+
+async function updateFoodPartnerTimingService(userId, { openingTime, closingTime }) {
+  const user = await User.findByPk(userId);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user.role !== "food_partner") {
+    throw new Error("Only food partner can update timing");
+  }
+
+  await user.update({ openingTime, closingTime });
+
+  return user;
+}
+
+
 module.exports = {
   registerUserService,
   verifyUserOtpService,
@@ -208,4 +227,5 @@ module.exports = {
   forgotPasswordService,
   verifyForgotPasswordOtpService,
   resetPasswordService,
+  updateFoodPartnerTimingService,
 };

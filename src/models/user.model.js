@@ -94,8 +94,17 @@ module.exports = (sequelize, DataTypes) => {
     earnings: {
       type: DataTypes.DECIMAL(10, 2),
       defaultValue: 0
-    }
+    },
 
+    openingTime: {
+      type: DataTypes.TIME,
+      allowNull: true,
+    },
+    
+    closingTime: {
+      type: DataTypes.TIME,
+      allowNull: true,
+    }
   });
 
 

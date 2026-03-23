@@ -111,7 +111,24 @@ const updateUserProfileSchema = Joi.object({
   phoneNumber: phoneField.optional(),
 }).min(1);
 
-//--------------------------------------------------------------
+//---------------------------- UPDATE FOOD PARTNER TIMING (OPEN/CLOSE) -------------------------
+
+const updateFoodPartnerTimingSchema = Joi.object({
+  openingTime: Joi.string()
+    .pattern(/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/)
+    .required()
+    .messages({
+      "string.pattern.base": "openingTime must be in HH:MM:SS format",
+    }),
+
+  closingTime: Joi.string()
+    .pattern(/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/)
+    .required()
+    .messages({
+      "string.pattern.base": "closingTime must be in HH:MM:SS format",
+    }),
+});
+
 
 module.exports = {
   registerSchema,
@@ -121,4 +138,5 @@ module.exports = {
   verifyForgotOtpSchema,
   resetPasswordSchema,
   updateUserProfileSchema,
+  updateFoodPartnerTimingSchema,
 };
