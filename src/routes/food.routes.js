@@ -16,6 +16,14 @@ const upload = multer();
 
 router.get("/search", validate(searchFoodSchema, "query"), foodController.searchFoods);
 
+
+// -------- GET ALL FOODS (PUBLIC FEED WITH PAGINATION) --------
+
+router.get(
+  "/Pagination",
+  foodController.getAllFoods
+);
+
 // ------ Get food partner's own foods --------
 
 router.get(
@@ -61,5 +69,7 @@ router.post(
   validate(addSavedToCartSchema),
   foodController.addSavedToCart
 );
+
+
 
 module.exports = router;

@@ -101,8 +101,10 @@ async function getMyFoodsService(foodPartnerId) {
 
 //------------------------------- GET ALL FOODS ----------------------------------------------
 
-async function getAllFoodsService() {
-  const foods = await Food.findAll({
+async function getAllFoodsService({ page = 1, limit = 10, sortBy = "createdAt", order = "DESC" }) {
+  const offset = (page - 1) * limit;
+
+  const { count, rows } = await Food.findAndCountAll({
     include: [
       {
         model: User,
@@ -110,10 +112,12 @@ async function getAllFoodsService() {
         attributes: ["id", "fullName", "email", "openingTime", "closingTime"],
       },
     ],
-    order: [["createdAt", "DESC"]],
+    order: [[sortBy, order.toUpperCase()]],
+    limit,
+    offset,
   });
 
-  return foods.map(food => {
+  const foods = rows.map(food => {
     const data = food.toJSON();
 
     return {
@@ -124,7 +128,15 @@ async function getAllFoodsService() {
       ),
     };
   });
+
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    foods,
+  };
 }
+
 //------------------------------- LIKE/UNLIKE FOOD ----------------------------------------------
 
 async function likeFoodService({ userId, foodId }) {
@@ -183,7 +195,17 @@ async function getSavedFoodsService(userId) {
 
 //------------------------------- SEARCH FOODS ----------------------------------------------
 
-async function searchFoodsService({ query, category, partner }) {
+async function searchFoodsService({
+  query,
+  category,
+  partner,
+  page = 1,
+  limit = 10,
+  sortBy = "createdAt",
+  order = "DESC",
+}) {
+  const offset = (page - 1) * limit;
+
   const foodWhere = {};
 
   if (query) {
@@ -209,13 +231,15 @@ async function searchFoodsService({ query, category, partner }) {
     },
   ];
 
-  const foods = await Food.findAll({
+  const { count, rows } = await Food.findAndCountAll({
     where: foodWhere,
     include,
-    order: [["createdAt", "DESC"]],
+    order: [[sortBy, order.toUpperCase()]],
+    limit,
+    offset,
   });
 
-  return foods.map(food => {
+  const foods = rows.map(food => {
     const data = food.toJSON();
 
     return {
@@ -226,6 +250,13 @@ async function searchFoodsService({ query, category, partner }) {
       ),
     };
   });
+
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    foods,
+  };
 }
 
 //------------------------------- UPDATE FOOD ----------------------------------------------

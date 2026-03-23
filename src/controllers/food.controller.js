@@ -31,12 +31,24 @@ async function getMyFoods(req, res) {
 
 async function getAllFoods(req, res) {
   try {
-    const foods = await foodService.getAllFoodsService();
-    res.status(200).json({ message: "Food items fetched", count: foods.length, foods });
+    const { page = 1, limit = 10, sortBy = "createdAt", order = "DESC" } = req.query;
+
+    const result = await foodService.getAllFoodsService({
+      page: Number(page),
+      limit: Number(limit),
+      sortBy,
+      order,
+    });
+
+    res.status(200).json({
+      message: "Food items fetched",
+      ...result,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 }
+
 
 //------------------------------- LIKE/UNLIKE FOOD ----------------------------------------------
 
@@ -80,8 +92,20 @@ async function getSavedFoods(req, res) {
 
 async function searchFoods(req, res) {
   try {
-    const foods = await foodService.searchFoodsService(req.query);
-    res.status(200).json({ message: "Search results fetched successfully", count: foods.length, foods });
+    const { page = 1, limit = 10, sortBy = "createdAt", order = "DESC" } = req.query;
+
+    const result = await foodService.searchFoodsService({
+      ...req.query,
+      page: Number(page),
+      limit: Number(limit),
+      sortBy,
+      order,
+    });
+
+    res.status(200).json({
+      message: "Search results fetched successfully",
+      ...result,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

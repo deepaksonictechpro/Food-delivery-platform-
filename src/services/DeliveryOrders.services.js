@@ -122,20 +122,41 @@ async function placeOrderService(userId, cartItems, address, paymentMethod) {
 
 // ------------------------------- GET USER ORDERS SERVICE --------------------------------------
 
-async function getUserOrdersService(userId) {
-  const orders = await DeliveryOrder.findAll({
+async function getUserOrdersService(
+  userId,
+  { page = 1, limit = 10, sortBy = "createdAt", order = "DESC" }
+) {
+  const offset = (page - 1) * limit;
+
+  const { count, rows } = await DeliveryOrder.findAndCountAll({
     where: { userId },
     include: [{ model: Food, as: "food" }],
-    order: [["createdAt", "DESC"]],
+    order: [[sortBy, order.toUpperCase()]],
+    limit,
+    offset,
   });
 
-  return orders.map(cleanOrderResponse);
+  const orders = rows.map(cleanOrderResponse);
+
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    orders,
+  };
 }
 
 // ------------------------------- GET AVAILABLE ORDERS SERVICE --------------------------------------
 
-async function getAvailableOrdersService() {
-  const orders = await DeliveryOrder.findAll({
+async function getAvailableOrdersService({
+  page = 1,
+  limit = 10,
+  sortBy = "createdAt",
+  order = "DESC",
+}) {
+  const offset = (page - 1) * limit;
+
+  const { count, rows } = await DeliveryOrder.findAndCountAll({
     where: {
       deliveryPartnerId: null,
       status: ORDER_STATUS.PENDING,
@@ -144,9 +165,19 @@ async function getAvailableOrdersService() {
       { model: Food, as: "food" },
       { model: User, as: "user", attributes: ["id", "fullName"] },
     ],
+    order: [[sortBy, order.toUpperCase()]],
+    limit,
+    offset,
   });
 
-  return orders.map(cleanOrderResponse);
+  const orders = rows.map(cleanOrderResponse);
+
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    orders,
+  };
 }
 
 // ------------------------------- ACCEPT ORDER SERVICE --------------------------------------

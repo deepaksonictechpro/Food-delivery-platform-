@@ -32,20 +32,37 @@ const placeOrder = async (req, res) => {
 
 const getUserOrders = async (req, res) => {
   try {
-    const orders = await deliveryService.getUserOrdersService(req.user.id);
-    res.status(200).json({ orders });
+    const { page = 1, limit = 10, sortBy = "createdAt", order = "DESC" } = req.query;
+
+    const result = await deliveryService.getUserOrdersService(req.user.id, {
+      page: Number(page),
+      limit: Number(limit),
+      sortBy,
+      order,
+    });
+
+    res.status(200).json(result);
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ message: err.message });
   }
 };
 
-//------------------------------- GET AVAILABLE ORDERS FOR DELIVERY PARTNERS -----------------------------
+
+//----------------------------- GET AVAILABLE ORDERS FOR DELIVERY PARTNERS ----------------------
 
 const getAvailableOrders = async (req, res) => {
   try {
-    const orders = await deliveryService.getAvailableOrdersService();
-    res.status(200).json({ orders });
+    const { page = 1, limit = 10, sortBy = "createdAt", order = "DESC" } = req.query;
+
+    const result = await deliveryService.getAvailableOrdersService({
+      page: Number(page),
+      limit: Number(limit),
+      sortBy,
+      order,
+    });
+
+    res.status(200).json(result);
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ message: err.message });
