@@ -19,11 +19,11 @@ async function createAdmin(req, res) {
 
 async function getAllUsers(req, res) {
   try {
-    const users = await adminService.fetchAllUsers();
+    const result = await adminService.fetchAllUsers(req.query);
+
     return res.status(200).json({
       message: "Users fetched successfully",
-      count: users.length,
-      users,
+      ...result,
     });
   } catch (error) {
     console.error("GET USERS ERROR:", error);
@@ -35,11 +35,11 @@ async function getAllUsers(req, res) {
 
 async function getAllFoods(req, res) {
   try {
-    const foods = await adminService.fetchAllFoods();
+    const result = await adminService.fetchAllFoods(req.query);
+
     return res.status(200).json({
       message: "Foods fetched successfully",
-      count: foods.length,
-      foods,
+      ...result,
     });
   } catch (error) {
     console.error("GET FOODS ERROR:", error);
@@ -51,11 +51,11 @@ async function getAllFoods(req, res) {
 
 async function getAllFoodPartners(req, res) {
   try {
-    const partners = await adminService.fetchAllFoodPartners();
+    const result = await adminService.fetchAllFoodPartners(req.query);
+
     return res.status(200).json({
       message: "Food partners fetched successfully",
-      count: partners.length,
-      partners,
+      ...result,
     });
   } catch (error) {
     console.error("GET FOOD PARTNERS ERROR:", error);
@@ -67,11 +67,11 @@ async function getAllFoodPartners(req, res) {
 
 async function getAllDeliveryPartners(req, res) {
   try {
-    const partners = await adminService.fetchAllDeliveryPartners();
+    const result = await adminService.fetchAllDeliveryPartners(req.query);
+
     return res.status(200).json({
       message: "Delivery partners fetched successfully",
-      count: partners.length,
-      partners,
+      ...result,
     });
   } catch (error) {
     console.error("GET DELIVERY PARTNERS ERROR:", error);

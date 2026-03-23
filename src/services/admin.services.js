@@ -49,45 +49,85 @@ async function createAdminService({ fullName, email, password }) {
 
 //--------------------------------------- Get all users ---------------------------------------------
 
-async function fetchAllUsers() {
-  const users = await User.findAll({
+async function fetchAllUsers({ page = 1, limit = 10, sortBy = "createdAt", order = "DESC" }) {
+  const offset = (page - 1) * limit;
+
+  const { count, rows } = await User.findAndCountAll({
     attributes: { exclude: ["password"] },
-    order: [["createdAt", "DESC"]],
+    order: [[sortBy, order.toUpperCase()]],
+    limit,
+    offset,
   });
-  return users;
+
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    users: rows,
+  };
 }
 
 //--------------------------------------- Get all foods ---------------------------------------------
 
-async function fetchAllFoods() {
-  const foods = await Food.findAll({
-    order: [["createdAt", "DESC"]],
+async function fetchAllFoods({ page = 1, limit = 10, sortBy = "createdAt", order = "DESC" }) {
+  const offset = (page - 1) * limit;
+
+  const { count, rows } = await Food.findAndCountAll({
+    order: [[sortBy, order.toUpperCase()]],
+    limit,
+    offset,
   });
-  return foods;
+
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    foods: rows,
+  };
 }
 
 
 //--------------------------------------- Get all food partner---------------------------------------
 
-async function fetchAllFoodPartners() {
-  const partners = await User.findAll({
+async function fetchAllFoodPartners({ page = 1, limit = 10, sortBy = "createdAt", order = "DESC" }) {
+  const offset = (page - 1) * limit;
+
+  const { count, rows } = await User.findAndCountAll({
     where: { role: "food_partner" },
     attributes: { exclude: ["password"] },
-    order: [["createdAt", "DESC"]],
+    order: [[sortBy, order.toUpperCase()]],
+    limit,
+    offset,
   });
-  return partners;
+
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    partners: rows,
+  };
 }
 
 
 //--------------------------------------- Get all delivery partners ----------------------------------
 
-async function fetchAllDeliveryPartners() {
-  const partners = await User.findAll({
+async function fetchAllDeliveryPartners({ page = 1, limit = 10, sortBy = "createdAt", order = "DESC" }) {
+  const offset = (page - 1) * limit;
+
+  const { count, rows } = await User.findAndCountAll({
     where: { role: "delivery_partner" },
     attributes: { exclude: ["password"] },
-    order: [["createdAt", "DESC"]],
+    order: [[sortBy, order.toUpperCase()]],
+    limit,
+    offset,
   });
-  return partners;
+
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    partners: rows,
+  };
 }
 
 //--------------------------------------- Get admin profile --------------------------------------------
