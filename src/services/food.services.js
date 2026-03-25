@@ -3,6 +3,7 @@ const storageService = require("./storage.service");
 const { v4: uuid } = require("uuid");
 const { Op, Sequelize } = require("sequelize");
 const { getFoodPartnerStatus } = require("../utils/foodPartnerStatus");
+const { getPagination, getPagingData } = require("../utils/pagination.utility");
 
 // Helper: case-insensitive LIKE
 const ciLike = (column, value) =>
@@ -73,8 +74,11 @@ async function createFoodService({ name, description, category, price, file, foo
 
 //------------------------------- GET MY FOODS ----------------------------------------------
 
-async function getMyFoodsService(foodPartnerId) {
-  const foodItems = await Food.findAll({
+async function getMyFoodsService({ foodPartnerId, page, limit }) {
+
+  const { limit: pageSize, offset } = getPagination(page, limit);
+
+  const data = await Food.findAndCountAll({
     where: { foodPartnerId },
     include: [
       {
@@ -83,20 +87,30 @@ async function getMyFoodsService(foodPartnerId) {
         attributes: ["id", "fullName", "email", "openingTime", "closingTime"],
       },
     ],
+    limit: pageSize, 
+    offset,           
     order: [["createdAt", "DESC"]],
   });
 
-  return foodItems.map(food => {
-    const data = food.toJSON();
+ 
+  const formattedData = data.rows.map(food => {
+    const result = food.toJSON();
 
     return {
-      ...data,
+      ...result,
       foodPartnerStatus: getFoodPartnerStatus(
-        data.foodPartner?.openingTime,
-        data.foodPartner?.closingTime
+        result.foodPartner?.openingTime,
+        result.foodPartner?.closingTime
       ),
     };
   });
+
+  // return paginated response
+  return getPagingData(
+    { count: data.count, rows: formattedData },
+    page,
+    limit
+  );
 }
 
 //------------------------------- GET ALL FOODS ----------------------------------------------
@@ -216,24 +230,32 @@ async function saveFoodService({ userId, foodId }) {
 
 //------------------------------- GET SAVED FOODS ----------------------------------------------
 
-async function getSavedFoodsService(userId) {
-  const savedItems = await Save.findAll({
+async function getSavedFoodsService({ userId, page, limit }) {
+  const { limit: pageSize, offset } = getPagination(page, limit);
+
+  const data = await Save.findAndCountAll({
     where: { userId },
+
     include: [
       {
         model: Food,
-        include: [
-          {
-            model: User,
-            as: "foodPartner",
-            attributes: ["id", "fullName"],
-          },
+        attributes: [
+          "id",
+          "name",
+          "price",
+          "video",
+          "averageRating",
+          "isAvailable",
         ],
       },
     ],
+
+    limit: pageSize,
+    offset,
+    order: [["createdAt", "DESC"]],
   });
 
-  return savedItems.map((item) => item.Food);
+  return getPagingData(data, page, limit);
 }
 
 //------------------------------- SEARCH FOODS ----------------------------------------------

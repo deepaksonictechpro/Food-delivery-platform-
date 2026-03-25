@@ -22,19 +22,25 @@ async function createReview(req, res, next) {
 }
 
 // ================= GET =================
-async function getReviews(req, res, next) {
+async function getReviews(req, res) {
   try {
-    const { foodPartnerId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
 
-    const reviews = await service.getPartnerReviewsService(foodPartnerId);
+    const result = await service.getFoodPartnerReviewsService({
+      foodPartnerId: req.params.foodPartnerId,
+      page,
+      limit,
+    });
 
-    res.json({
-      success: true,
-      data: reviews,
+    return res.status(200).json({
+      message: "Food partner reviews fetched",
+      ...result,
     });
 
   } catch (err) {
-    next(err);
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 }
 

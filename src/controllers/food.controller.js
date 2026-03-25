@@ -20,10 +20,23 @@ async function createFood(req, res) {
 
 async function getMyFoods(req, res) {
   try {
-    const foods = await foodService.getMyFoodsService(req.user.id);
-    res.status(200).json({ message: "Your foods fetched successfully", count: foods.length, foodItems: foods });
+    const { page = 1, limit = 10 } = req.query;
+
+    const result = await foodService.getMyFoodsService({
+      foodPartnerId: req.user.id,
+      page,
+      limit,
+    });
+
+    return res.status(200).json({
+      message: "Your foods fetched successfully",
+      ...result,
+    });
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 }
 
@@ -69,15 +82,23 @@ async function saveFood(req, res) {
 
 async function getSavedFoods(req, res) {
   try {
-    const savedFoods = await foodService.getSavedFoodsService(req.user.id);
+    const { page = 1, limit = 10 } = req.query;
 
-    res.status(200).json({
-      message: "Saved foods fetched",
-      count: savedFoods.length,
-      savedFoods,
+    const result = await foodService.getSavedFoodsService({
+      userId: req.user.id,
+      page,
+      limit,
     });
+
+    return res.status(200).json({
+      message: "Saved foods fetched",
+      ...result,
+    });
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 }
 

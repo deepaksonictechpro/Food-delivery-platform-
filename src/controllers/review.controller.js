@@ -24,22 +24,24 @@ async function createReview(req, res, next) {
 
 //------------------------------- GET REVIEWS ----------------------------------------------
 
-async function getReviewsByFood(req, res, next) {
+async function getReviewsByFood(req, res) {
   try {
-    const { foodId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
 
-    const reviews = await reviewService.getReviewsByFoodService(foodId);
-
-    res.json({
-      success: true,
-      data: reviews,
+    const result = await reviewService.getReviewsByFoodService({
+      foodId: req.params.foodId,
+      page,
+      limit,
     });
 
+    res.status(200).json({
+      message: "Reviews fetched successfully",
+      ...result,
+    });
   } catch (err) {
-    next(err);
+    res.status(500).json({ message: err.message });
   }
 }
-
 //------------------------------- DELETE REVIEW ----------------------------------------------
 
 async function deleteReview(req, res, next) {

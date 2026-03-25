@@ -1,4 +1,5 @@
-    const { Review, Food, DeliveryOrder, sequelize, User } = require("../models");
+const { Review, Food, DeliveryOrder, sequelize, User } = require("../models");
+const { getPagination, getPagingData } = require("../utils/pagination.utility");
 
 //------------------------------- CREATE REVIEW ----------------------------------------------
 
@@ -56,18 +57,24 @@ async function createReviewService({ userId, foodId, rating, review }) {
 
 //------------------------------- GET REVIEWS BY FOOD ----------------------------------------------
 
-async function getReviewsByFoodService(foodId) {
-  return await Review.findAll({
-    where: { foodId },
-    include: [
-      {
-        model: User,
-        as: "user",
-        attributes: ["id", "fullName"],
-      },
-    ],
-    order: [["createdAt", "DESC"]],
-  });
+async function getReviewsByFoodService({ foodId, page, limit }) {
+  const { limit: pageSize, offset } = getPagination(page, limit);
+
+  const data = await Review.findAndCountAll({
+  where: { foodId },
+  include: [
+    {
+      model: User,
+      as: "user",   
+      attributes: ["id", "fullName", "profileImage"]
+    },
+  ],
+  limit: pageSize,
+  offset,
+  order: [["createdAt", "DESC"]],
+});
+
+  return getPagingData(data, page, limit);
 }
 
 //------------------------------- DELETE REVIEW ----------------------------------------------

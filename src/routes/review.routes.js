@@ -5,8 +5,7 @@ const reviewController = require("../controllers/review.controller");
 const {authUserMiddleware} = require("../middlewares/auth.middleware");
 const validate = require("../middlewares/validate.middleware");
 const { createReviewSchema } = require("../validations/review.validation");
-
-module.exports = router;
+const { paginationSchema } = require("../validations/pagination.validation");
 
 
 //------------------------------- ROUTES ----------------------------------------------
@@ -20,6 +19,7 @@ router.post(
 
 router.get(
   "/get-reviews-by-food/:foodId",
+  validate(paginationSchema, "query"),
   reviewController.getReviewsByFood
 );
 

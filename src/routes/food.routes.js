@@ -3,6 +3,7 @@ const multer = require("multer");
 const foodController = require("../controllers/food.controller");
 const { authUserMiddleware, authRoleMiddleware } = require("../middlewares/auth.middleware");
 const validate = require("../middlewares/validate.middleware");
+const { paginationSchema } = require("../validations/pagination.validation");
 
 const {
   createFoodSchema,
@@ -33,8 +34,10 @@ router.get(
   "/get-food",
   authUserMiddleware,
   authRoleMiddleware(["food_partner"]),
+  validate(paginationSchema, "query"),
   foodController.getMyFoods
 );
+
 
 router.post(
   "/create-food",
@@ -63,6 +66,7 @@ router.post(
 router.get(
   "/get-saved-foods",
   authUserMiddleware,
+  validate(paginationSchema, "query"),
   foodController.getSavedFoods
 );
 
