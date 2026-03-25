@@ -38,9 +38,7 @@ async function updateDeliveryPartnerProfile(req, res) {
       phoneNumber: req.body.phoneNumber,
       vehicleType: req.body.vehicleType,
       vehicleNumber: req.body.vehicleNumber,
-      drivingLicenseNumber: req.body.drivingLicenseNumber,
-      totalDeliveries: req.body.totalDeliveries,
-      earnings: req.body.earnings
+      drivingLicenseNumber: req.body.drivingLicenseNumber
     };
 
     if (req.file) {
