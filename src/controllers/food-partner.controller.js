@@ -6,12 +6,22 @@ async function getFoodPartnerById(req, res) {
     const id = req.params.id;
     const foodPartner = await foodPartnerService.fetchFoodPartnerById(id);
 
-    if (!foodPartner) return res.status(404).json({ message: "Food partner not found" });
+    if (!foodPartner) return res.status(404).json({
+      success: false,
+      message: "Food partner not found"
+    });
 
-    res.status(200).json({ message: "Food partner retrieved successfully", foodPartner });
+    res.status(200).json({
+      success: true,
+      message: "Food partner retrieved successfully",
+      data: foodPartner
+    });
   } catch (error) {
     console.error("GET FOOD PARTNER ERROR:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve food partner"
+    });
   }
 }
 

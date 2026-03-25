@@ -15,13 +15,20 @@ async function addAddress(req, res) {
       }
     );
 
-    res.status(201).json({ message: "Address added", address });
+    res.status(201).json({
+      success: true,
+      message: "Address added",
+      data: address
+    });
 
   } catch (err) {
     deleteFile(uploadedFilePath);
 
     console.error("ADD ADDRESS ERROR:", err.message);
-    res.status(400).json({ message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
   }
 }
 // --------------------------------- Get User Addresses -------------------------------------
@@ -29,10 +36,20 @@ async function addAddress(req, res) {
 async function getUserAddresses(req, res) {
   try {
     const addresses = await addressService.getUserAddressesService(req.user.id);
-    res.status(200).json({ count: addresses.length, addresses });
+    res.status(200).json({
+      success: true,
+      message: "Addresses retrieved successfully",
+      data: {
+        count: addresses.length,
+        addresses
+      }
+    });
   } catch (err) {
     console.error("GET ADDRESSES ERROR:", err.message);
-    res.status(500).json({ message: "Failed to fetch addresses" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch addresses"
+    });
   }
 }
 
@@ -47,10 +64,17 @@ async function updateAddress(req, res) {
       req.file 
     );
 
-    res.status(200).json({ message: "Address updated", address });
+    res.status(200).json({
+      success: true,
+      message: "Address updated",
+      data: address
+    });
   } catch (err) {
     console.error("UPDATE ADDRESS ERROR:", err.message);
-    res.status(400).json({ message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
   }
 }
 
@@ -59,10 +83,16 @@ async function updateAddress(req, res) {
 async function deleteAddress(req, res) {
   try {
     const result = await addressService.deleteAddressService(req.user.id, req.params.id);
-    res.status(200).json(result);
+    res.status(200).json({
+      success: true,
+      message: result.message
+    });
   } catch (err) {
     console.error("DELETE ADDRESS ERROR:", err.message);
-    res.status(400).json({ message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
   }
 }
 

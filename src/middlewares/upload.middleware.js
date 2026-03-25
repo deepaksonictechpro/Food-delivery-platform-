@@ -26,10 +26,10 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Export separate uploaders
-const adminUpload = multer({ storage: getStorage("admin"), fileFilter });
-const foodPartnerUpload = multer({ storage: getStorage("food_partner"), fileFilter });
-const userUpload = multer({ storage: getStorage("user"), fileFilter });
-const deliverypartnerUpload = multer({storage: getStorage("delivery_partner"), fileFilter});
-const userDoorImageUpload = multer({ storage: getStorage("door_image"), fileFilter });
+const adminUpload = multer({ storage: getStorage("admin"), fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
+const foodPartnerUpload = multer({ storage: getStorage("food_partner"), fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
+const userUpload = multer({ storage: getStorage("user"), fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
+const deliverypartnerUpload = multer({storage: getStorage("delivery_partner"), fileFilter, limits: { fileSize: 5 * 1024 * 1024 }});
+const userDoorImageUpload = multer({ storage: getStorage("door_image"), fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
 module.exports = { adminUpload, foodPartnerUpload, userUpload, deliverypartnerUpload, userDoorImageUpload };

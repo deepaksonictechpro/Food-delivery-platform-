@@ -89,8 +89,8 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "foodId",
         as: "reviews",
         onDelete: "CASCADE",
-    });
-  }
+      });
+    }
 
     // Food → Delivery Orders
     Food.hasMany(models.DeliveryOrder, {

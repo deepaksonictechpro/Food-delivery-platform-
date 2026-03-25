@@ -10,7 +10,11 @@ async function createFood(req, res) {
       file: req.file, 
       foodPartnerId: req.user.id 
     });
-    res.status(201).json({ message: "Food created successfully", food });
+    res.status(201).json({
+      success: true,
+      message: "Food created successfully",
+      data: food
+    });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -29,8 +33,9 @@ async function getMyFoods(req, res) {
     });
 
     return res.status(200).json({
+      success: true,
       message: "Your foods fetched successfully",
-      ...result,
+      data: result,
     });
 
   } catch (err) {
@@ -97,7 +102,8 @@ async function getSavedFoods(req, res) {
 
   } catch (err) {
     return res.status(500).json({
-      message: err.message,
+      success: false,
+      message: "Failed to fetch foods"
     });
   }
 }
@@ -144,7 +150,10 @@ async function deleteFood(req, res) {
     await foodService.deleteFoodService(foodId, req.user.id);
     res.status(200).json({ message: "Food deleted successfully" });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
   }
 }
 

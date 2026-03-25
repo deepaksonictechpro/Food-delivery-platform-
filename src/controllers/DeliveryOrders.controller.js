@@ -11,7 +11,10 @@ const placeOrder = async (req, res) => {
     const cartItems = await getCartService(req.user.id);
 
     if (!cartItems || cartItems.length === 0) {
-      return res.status(400).json({ message: "Cart is empty" });
+      return res.status(400).json({
+        success: false,
+        message: "Cart is empty"
+      });
     }
 
     const orders = await deliveryService.placeOrderService(
@@ -21,10 +24,17 @@ const placeOrder = async (req, res) => {
       paymentMethod
     );
 
-    res.status(201).json({ message: "Order placed successfully", orders });
+    res.status(201).json({
+      success: true,
+      message: "Order placed successfully",
+      data: orders
+    });
   } catch (err) {
     console.error("PLACE ORDER ERROR:", err.message);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to place order"
+    });
   }
 };
 

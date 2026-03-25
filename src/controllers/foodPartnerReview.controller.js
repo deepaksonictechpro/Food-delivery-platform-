@@ -33,13 +33,15 @@ async function getReviews(req, res) {
     });
 
     return res.status(200).json({
+      success: true,
       message: "Food partner reviews fetched",
-      ...result,
+      data: result,
     });
 
   } catch (err) {
     return res.status(500).json({
-      message: err.message,
+      success: false,
+      message: "Failed to fetch reviews"
     });
   }
 }

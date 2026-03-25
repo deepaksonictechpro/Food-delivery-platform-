@@ -129,24 +129,27 @@ async function forgotPasswordService(email) {
   const normalizedEmail = normalizeEmail(email);
 
   const user = await User.findOne({ where: { email: normalizedEmail } });
-  if (!user) throw new Error("User not found");
+  
+  if (user) {
+    // Only generate and send OTP if user exists
+    const otp = generateOtp();
+    const hashedOtp = await bcrypt.hash(otp, 10);
+    console.log("Reset password OTP - ", otp);
 
-  const otp = generateOtp();
-  const hashedOtp = await bcrypt.hash(otp, 10);
-  console.log("Reset password OTP - ", otp);
+    user.otp = hashedOtp;
+    user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    user.otpAttempts = 0;
+    user.isOtpVerified = false;
 
-  user.otp = hashedOtp;
-  user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
-  user.otpAttempts = 0;
-  user.isOtpVerified = false;
+    await user.save();
 
-  await user.save();
-
-  if (process.env.NODE_ENV === "development") {
-    console.log(`Forgot OTP for ${normalizedEmail}: ${otp}`);
+    if (process.env.NODE_ENV === "development") {
+      console.log(`Forgot OTP for ${normalizedEmail}: ${otp}`);
+    }
   }
 
-  return { message: "OTP sent for password reset" };
+  // Always return the same message to prevent email enumeration
+  return { message: "If the email exists, an OTP has been sent for password reset" };
 }
 
 //------------------------------- VERIFY FORGOT PASSWORD OTP --------------------------------------

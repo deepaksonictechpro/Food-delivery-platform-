@@ -22,12 +22,16 @@ async function getAllUsers(req, res) {
     const result = await adminService.fetchAllUsers(req.query);
 
     return res.status(200).json({
+      success: true,
       message: "Users fetched successfully",
-      ...result,
+      data: result,
     });
   } catch (error) {
     console.error("GET USERS ERROR:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch users"
+    });
   }
 }
 
@@ -38,12 +42,16 @@ async function getAllFoods(req, res) {
     const result = await adminService.fetchAllFoods(req.query);
 
     return res.status(200).json({
+      success: true,
       message: "Foods fetched successfully",
-      ...result,
+      data: result,
     });
   } catch (error) {
     console.error("GET FOODS ERROR:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch foods"
+    });
   }
 }
 
@@ -54,12 +62,16 @@ async function getAllFoodPartners(req, res) {
     const result = await adminService.fetchAllFoodPartners(req.query);
 
     return res.status(200).json({
+      success: true,
       message: "Food partners fetched successfully",
-      ...result,
+      data: result,
     });
   } catch (error) {
     console.error("GET FOOD PARTNERS ERROR:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch food partners"
+    });
   }
 }
 
@@ -70,12 +82,16 @@ async function getAllDeliveryPartners(req, res) {
     const result = await adminService.fetchAllDeliveryPartners(req.query);
 
     return res.status(200).json({
+      success: true,
       message: "Delivery partners fetched successfully",
-      ...result,
+      data: result,
     });
   } catch (error) {
     console.error("GET DELIVERY PARTNERS ERROR:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch delivery partners"
+    });
   }
 }
 

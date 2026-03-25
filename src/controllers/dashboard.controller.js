@@ -7,7 +7,10 @@ async function getFoodPartnerDashboard(req, res) {
     res.status(200).json({ success: true, data });
   } catch (error) {
     console.error("[FoodPartnerDashboard]", error.message);
-    res.status(500).json({ success: false, message: "Failed to load Food Partner dashboard", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to load Food Partner dashboard"
+    });
   }
 }
 
@@ -18,7 +21,10 @@ async function getAdminDashboardStats(req, res) {
     res.status(200).json({ success: true, data });
   } catch (error) {
     console.error("[AdminDashboard]", error.message);
-    res.status(500).json({ success: false, message: "Failed to load Admin dashboard", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to load Admin dashboard"
+    });
   }
 }
 
@@ -29,7 +35,10 @@ async function getDeliveryPartnerDashboard(req, res) {
     res.status(200).json({ success: true, data });
   } catch (error) {
     console.error("[DeliveryPartnerDashboard]", error.message);
-    res.status(500).json({ success: false, message: "Failed to load Delivery Partner dashboard", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to load Delivery Partner dashboard"
+    });
   }
 }
 

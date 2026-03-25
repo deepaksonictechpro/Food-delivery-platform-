@@ -13,12 +13,16 @@ async function addToCart(req, res) {
     );
 
     res.status(201).json({
+      success: true,
       message: "Item added to cart",
-      cartItem,
+      data: cartItem,
     });
   } catch (err) {
     console.error("ADD TO CART ERROR:", err.message);
-    res.status(400).json({ message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
   }
 }
 
@@ -29,12 +33,19 @@ async function getCart(req, res) {
     const cartItems = await cartService.getCartService(req.user.id);
 
     res.status(200).json({
-      count: cartItems.length,
-      cartItems,
+      success: true,
+      message: "Cart retrieved successfully",
+      data: {
+        count: cartItems.length,
+        cartItems,
+      }
     });
   } catch (err) {
     console.error("GET CART ERROR:", err.message);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve cart"
+    });
   }
 }
 
@@ -52,12 +63,16 @@ async function updateCartItem(req, res) {
     );
 
     res.status(200).json({
+      success: true,
       message: "Cart updated successfully",
-      cartItem,
+      data: cartItem,
     });
   } catch (err) {
     console.error("UPDATE CART ERROR:", err.message);
-    res.status(400).json({ message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
   }
 }
 
@@ -72,10 +87,16 @@ async function removeCartItem(req, res) {
       foodId
     );
 
-    res.status(200).json(result);
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
   } catch (err) {
     console.error("REMOVE CART ERROR:", err.message);
-    res.status(400).json({ message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
   }
 }
 

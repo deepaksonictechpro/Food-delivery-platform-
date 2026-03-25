@@ -1,17 +1,41 @@
 const { Cart } = require("../models");
+const { sequelize } = require("../config/database");
 
 //------------------------------- ADD TO CART --------------------------------------
 
 async function addToCartService(userId, foodId, quantity) {
-  const cartItem = await Cart.findOne({ where: { userId, foodId } });
+  const transaction = await sequelize.transaction();
 
-  if (cartItem) {
-    cartItem.quantity += quantity;
-    await cartItem.save();
-    return cartItem;
+  try {
+    // Check if item already exists
+    const existingItem = await Cart.findOne({
+      where: { userId, foodId },
+      transaction,
+      lock: transaction.LOCK.UPDATE // Prevent concurrent updates
+    });
+
+    if (existingItem) {
+      // Atomically increment quantity
+      await Cart.increment('quantity', {
+        by: quantity,
+        where: { userId, foodId },
+        transaction
+      });
+
+      await transaction.commit();
+
+      // Return updated item
+      return await Cart.findOne({ where: { userId, foodId } });
+    } else {
+      // Create new cart item
+      const newItem = await Cart.create({ userId, foodId, quantity }, { transaction });
+      await transaction.commit();
+      return newItem;
+    }
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
   }
-
-  return Cart.create({ userId, foodId, quantity });
 }
 
 //------------------------------- GET CART ITEMS --------------------------------------
@@ -40,14 +64,34 @@ async function getCartService(userId) {
 //------------------------------- UPDATE CART ITEM QUANTITY --------------------------------------
 
 async function updateCartItemService(userId, foodId, quantity) {
-  const cartItem = await Cart.findOne({ where: { userId, foodId } });
+  const transaction = await sequelize.transaction();
 
-  if (!cartItem) throw new Error("Item not found in cart");
+  try {
+    const cartItem = await Cart.findOne({
+      where: { userId, foodId },
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
 
-  cartItem.quantity = quantity;
-  await cartItem.save();
+    if (!cartItem) {
+      await transaction.rollback();
+      throw new Error("Item not found in cart");
+    }
 
-  return cartItem;
+    // Atomically update quantity
+    await Cart.update(
+      { quantity: quantity },
+      { where: { userId, foodId }, transaction }
+    );
+
+    await transaction.commit();
+
+    // Return updated item
+    return await Cart.findOne({ where: { userId, foodId } });
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
 }
 
 //------------------------------- REMOVE FROM CART --------------------------------------
