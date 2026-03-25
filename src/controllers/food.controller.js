@@ -31,17 +31,10 @@ async function getMyFoods(req, res) {
 
 async function getAllFoods(req, res) {
   try {
-    const { page = 1, limit = 10, sortBy = "createdAt", order = "DESC" } = req.query;
-
-    const result = await foodService.getAllFoodsService({
-      page: Number(page),
-      limit: Number(limit),
-      sortBy,
-      order,
-    });
+    const result = await foodService.getAllFoodsService(req.query);
 
     res.status(200).json({
-      message: "Food items fetched",
+      message: "Filtered food items fetched",
       ...result,
     });
   } catch (err) {

@@ -101,41 +101,84 @@ async function getMyFoodsService(foodPartnerId) {
 
 //------------------------------- GET ALL FOODS ----------------------------------------------
 
-async function getAllFoodsService({ page = 1, limit = 10, sortBy = "createdAt", order = "DESC" }) {
-  const offset = (page - 1) * limit;
+async function getAllFoodsService(filters) {
+  const {
+    category,
+    minPrice,
+    maxPrice,
+    rating,
+    available,
+    sort,
+    search,
+  } = filters;
 
-  const { count, rows } = await Food.findAndCountAll({
-    include: [
-      {
-        model: User,
-        as: "foodPartner",
-        attributes: ["id", "fullName", "email", "openingTime", "closingTime"],
-      },
-    ],
-    order: [[sortBy, order.toUpperCase()]],
-    limit,
-    offset,
-  });
+  const where = {};
 
-  const foods = rows.map(food => {
-    const data = food.toJSON();
+  //  Category
+  if (category) {
+    where.category = category.toLowerCase();
+  }
 
-    return {
-      ...data,
-      foodPartnerStatus: getFoodPartnerStatus(
-        data.foodPartner?.openingTime,
-        data.foodPartner?.closingTime
-      ),
+  //  Price Range
+  if (minPrice || maxPrice) {
+    where.price = {};
+    if (minPrice) where.price[Op.gte] = Number(minPrice);
+    if (maxPrice) where.price[Op.lte] = Number(maxPrice);
+  }
+
+  // Rating
+  if (rating) {
+    where.averageRating = {
+      [Op.gte]: Number(rating),
     };
+  }
+
+  // Availability
+  if (available !== undefined) {
+    where.isAvailable = available === "true";
+  }
+
+  //  Search
+  if (search) {
+    where.name = {
+      [Op.like]: `%${search.trim()}%`,
+    };
+  }
+
+  // Sorting
+  const order = [];
+
+  switch (sort) {
+    case "price_asc":
+      order.push(["price", "ASC"]);
+      break;
+    case "price_desc":
+      order.push(["price", "DESC"]);
+      break;
+    case "rating":
+      order.push(["averageRating", "DESC"]);
+      break;
+    case "latest":
+      order.push(["createdAt", "DESC"]);
+      break;
+    default:
+      order.push(["createdAt", "DESC"]);
+  }
+
+  const foods = await Food.findAll({
+    where,
+    order,
   });
 
   return {
-    totalItems: count,
-    totalPages: Math.ceil(count / limit),
-    currentPage: page,
+    count: foods.length,
     foods,
   };
 }
+
+module.exports = {
+  getAllFoodsService,
+};
 
 //------------------------------- LIKE/UNLIKE FOOD ----------------------------------------------
 

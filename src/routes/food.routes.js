@@ -3,24 +3,27 @@ const multer = require("multer");
 const foodController = require("../controllers/food.controller");
 const { authUserMiddleware, authRoleMiddleware } = require("../middlewares/auth.middleware");
 const validate = require("../middlewares/validate.middleware");
-const { addSavedToCartSchema } = require("../validations/food.validation");
 
 const {
   createFoodSchema,
   foodActionSchema,
-  searchFoodSchema,
+  addSavedToCartSchema,
+  advancedFilterSchema,
 } = require("../validations/food.validation");
+
 
 const router = express.Router();
 const upload = multer();
 
-router.get("/search", validate(searchFoodSchema, "query"), foodController.searchFoods);
+// advanced search with filters
+router.get("/search", validate(advancedFilterSchema, "query"), foodController.searchFoods);
 
 
 // -------- GET ALL FOODS (PUBLIC FEED WITH PAGINATION) --------
 
 router.get(
-  "/Pagination",
+  "/get-all",
+  validate(advancedFilterSchema, "query"),
   foodController.getAllFoods
 );
 

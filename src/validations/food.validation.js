@@ -26,11 +26,14 @@ const addSavedToCartSchema = Joi.object({
 
 // -------------------------------- SEARCH FOOD SCHEMA --------------------------------------
 
-const searchFoodSchema = Joi.object({
-  keyword: Joi.string().optional(),
-  category: Joi.string().optional(),
-  minPrice: Joi.number().optional(),
-  maxPrice: Joi.number().optional(),
+const advancedFilterSchema = Joi.object({
+  category: Joi.string(),
+  minPrice: Joi.number(),
+  maxPrice: Joi.number(),
+  rating: Joi.number().min(1).max(5),
+  available: Joi.boolean(),
+  sort: Joi.string().valid("price_asc", "price_desc", "rating", "latest"),
+  search: Joi.string(),
 });
 
 
@@ -38,6 +41,6 @@ const searchFoodSchema = Joi.object({
 module.exports = {
   createFoodSchema,
   foodActionSchema,
-  searchFoodSchema,
+  advancedFilterSchema,
   addSavedToCartSchema,
 };
