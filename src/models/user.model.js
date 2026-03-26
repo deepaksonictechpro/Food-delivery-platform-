@@ -140,7 +140,13 @@ module.exports = (sequelize, DataTypes) => {
         constraints: true,
         onDelete: "CASCADE"
       });
-    }    
+    }
+    
+    if (models.Wallet) {
+      User.hasOne(models.Wallet, {
+      foreignKey: "userId",
+      });
+    }
 
     // Orders placed by user
     if (models.DeliveryOrder) {

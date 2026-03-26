@@ -11,6 +11,8 @@ db.Cart = require("./Cart.model")(sequelize, DataTypes);
 db.Address = require("./address.model")(sequelize, DataTypes);
 db.Review = require("./review.model")(sequelize, DataTypes);
 db.FoodPartnerReviews = require("./foodpartner_review.model")(sequelize, DataTypes);
+db.Wallet = require("./wallet.model")(sequelize, DataTypes);
+db.WalletTransaction = require("./walletTransaction.model")(sequelize, DataTypes);
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
