@@ -30,13 +30,14 @@ async function addToCart(req, res) {
 
 async function getCart(req, res) {
   try {
-    const cartItems = await cartService.getCartService(req.user.id);
+    const { cartItems, totalAmount } = await cartService.getCartService(req.user.id);
 
     res.status(200).json({
       success: true,
       message: "Cart retrieved successfully",
       data: {
         count: cartItems.length,
+        totalAmount,
         cartItems,
       }
     });

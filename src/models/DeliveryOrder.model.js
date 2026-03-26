@@ -23,7 +23,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       defaultValue: 1,
     },
-    address: {
+    addressId: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+    },
+    fullAddressSnapshot: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -47,7 +51,14 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 0,
     },
 
+    totalAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 0,
+      allowNull: false,
+    },
+
     // ================= CANCELLATION FIELDS =================
+
     cancelReason: {
       type: DataTypes.TEXT,
       allowNull: true,
@@ -92,6 +103,12 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "foodId",
       as: "food",
       onDelete: "CASCADE",
+    });
+
+    DeliveryOrder.belongsTo(models.Address, {
+      foreignKey: "addressId",
+      as: "addressInfo",
+      onDelete: "RESTRICT",
     });
   };
 

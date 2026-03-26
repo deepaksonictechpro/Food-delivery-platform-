@@ -1,21 +1,39 @@
 const { sequelize } = require("../models");
-const { DeliveryOrder, Food, User, Cart } = require("../models");
+const { DeliveryOrder, Food, User, Cart, Address } = require("../models");
 const { PER_DELIVERY_EARNING } = require("../constants/delivery.constants");
 const { ORDER_STATUS } = require("../constants/orderStatus.constants");
 const { getFoodPartnerStatus } = require("../utils/foodPartnerStatus");
 
 //------------------------------- CLEAN ORDER RESPONSE --------------------------------------
 
-function cleanOrderResponse(order) {
+function cleanOrderResponse(order, currentUser = {}) {
+  const isDeliveryPartner = currentUser.role === "delivery_partner";
+  const isAssignedPartner = order.deliveryPartnerId === currentUser.id;
+  const showEarning =
+    order.status === ORDER_STATUS.DELIVERED &&
+    isDeliveryPartner &&
+    isAssignedPartner;
+
   const response = {
     id: order.id,
-    foodId: order.foodId,
-    quantity: order.quantity,
-    address: order.address,
+    totalAmount: order.totalAmount || 0,
+    items: order.food
+      ? [{
+          foodId: order.foodId,
+          name: order.food.name,
+          quantity: order.quantity,
+          price: order.food.price,
+          subtotal: parseFloat(order.food.price) * order.quantity,
+        }]
+      : [],
+    address: {
+      id: order.addressId,
+      label: order.addressInfo?.label,
+      fullAddress: order.fullAddressSnapshot || order.address,
+    },
     status: order.status,
     paymentMethod: order.paymentMethod,
     deliveryPartnerId: order.deliveryPartnerId,
-    earning: order.earning,
     food: order.food
       ? {
           id: order.food.id,
@@ -31,6 +49,11 @@ function cleanOrderResponse(order) {
       : undefined,
   };
 
+  if (showEarning) {
+    response.earning = order.earning;
+  }
+
+
   if (order.cancelRequestedAt) {
     response.cancelReason = order.cancelReason;
     response.cancelRequestedAt = order.cancelRequestedAt;
@@ -45,10 +68,31 @@ function cleanOrderResponse(order) {
 
 //------------------------------- PLACE ORDER SERVICE --------------------------------------
 
-async function placeOrderService(userId, cartItems, address, paymentMethod) {
+async function placeOrderService(userId, cartItems, addressInput, paymentMethod) {
   if (!cartItems || !cartItems.length) {
     throw new Error("Cart is empty");
   }
+
+  const { addressId, addressLabel } = addressInput || {};
+
+  // Fetch and validate address ownership
+  let addressRecord;
+
+  if (addressId) {
+    addressRecord = await Address.findOne({
+      where: { id: addressId, userId },
+    });
+  } else if (addressLabel) {
+    addressRecord = await Address.findOne({
+      where: { label: addressLabel, userId },
+    });
+  }
+
+  if (!addressRecord) {
+    throw new Error("Address not found or unauthorized");
+  }
+
+  const fullAddressSnapshot = `${addressRecord.label}, ${addressRecord.address}, ${addressRecord.city}, ${addressRecord.state}, ${addressRecord.zipCode}, ${addressRecord.country}`;
 
   return await sequelize.transaction(async (transaction) => {
 
@@ -78,23 +122,49 @@ async function placeOrderService(userId, cartItems, address, paymentMethod) {
       }
     }
 
-    const orderData = cartItems.map((item) => {
+    const foodMap = foods.reduce((map, food) => {
+      map[food.id] = food;
+      return map;
+    }, {});
+
+    let totalAmount = 0;
+
+    const cartQuantities = cartItems.map((item) => {
       if (!item.foodId) throw new Error("Cart item missing foodId");
 
       if (!item.quantity || item.quantity <= 0) {
         throw new Error("Invalid quantity");
       }
 
+      const food = foodMap[item.foodId];
+      if (!food) throw new Error(`Food item ${item.foodId} not found`);
+
+      const subtotal = parseFloat(food.price) * item.quantity;
+      totalAmount += subtotal;
+
       return {
+        food,
         foodId: item.foodId,
-        userId,
         quantity: item.quantity,
-        address,
-        paymentMethod,
-        status: ORDER_STATUS.PENDING,
-        earning: 0,
+        subtotal,
       };
     });
+
+    if (totalAmount <= 0) {
+      throw new Error("Cart total amount must be greater than zero");
+    }
+
+    const orderData = cartQuantities.map((item) => ({
+      foodId: item.foodId,
+      userId,
+      quantity: item.quantity,
+      addressId: addressRecord.id,
+      fullAddressSnapshot,
+      paymentMethod,
+      status: ORDER_STATUS.PENDING,
+      earning: 0,
+      totalAmount,
+    }));
 
     const createdOrders = await DeliveryOrder.bulkCreate(orderData, {
       transaction,
@@ -112,7 +182,10 @@ async function placeOrderService(userId, cartItems, address, paymentMethod) {
 
     const ordersWithDetails = await DeliveryOrder.findAll({
       where: { id: createdOrders.map(o => o.id) },
-      include: [{ model: Food, as: "food" }],
+      include: [
+        { model: Food, as: "food" },
+        { model: Address, as: "addressInfo" },
+      ],
       transaction,
     });
 
@@ -124,19 +197,23 @@ async function placeOrderService(userId, cartItems, address, paymentMethod) {
 
 async function getUserOrdersService(
   userId,
-  { page = 1, limit = 10, sortBy = "createdAt", order = "DESC" }
+  { page = 1, limit = 10, sortBy = "createdAt", order = "DESC" },
+  currentUser = {}
 ) {
   const offset = (page - 1) * limit;
 
   const { count, rows } = await DeliveryOrder.findAndCountAll({
     where: { userId },
-    include: [{ model: Food, as: "food" }],
+    include: [
+      { model: Food, as: "food" },
+      { model: Address, as: "addressInfo" },
+    ],
     order: [[sortBy, order.toUpperCase()]],
     limit,
     offset,
   });
 
-  const orders = rows.map(cleanOrderResponse);
+  const orders = rows.map(order => cleanOrderResponse(order, currentUser));
 
   return {
     totalItems: count,
@@ -153,7 +230,7 @@ async function getAvailableOrdersService({
   limit = 10,
   sortBy = "createdAt",
   order = "DESC",
-}) {
+} = {}, currentUser = {}) {
   const offset = (page - 1) * limit;
 
   const { count, rows } = await DeliveryOrder.findAndCountAll({
@@ -164,13 +241,14 @@ async function getAvailableOrdersService({
     include: [
       { model: Food, as: "food" },
       { model: User, as: "user", attributes: ["id", "fullName"] },
+      { model: Address, as: "addressInfo" },
     ],
     order: [[sortBy, order.toUpperCase()]],
     limit,
     offset,
   });
 
-  const orders = rows.map(cleanOrderResponse);
+  const orders = rows.map((order) => cleanOrderResponse(order, currentUser));
 
   return {
     totalItems: count,
@@ -204,22 +282,23 @@ async function acceptOrderService(orderId, deliveryPartnerId) {
 
   await order.save();
 
-  return cleanOrderResponse(order);
+  return cleanOrderResponse(order, { id: deliveryPartnerId, role: "delivery_partner" });
 }
 
 //------------------------------- GET ASSIGNED DELIVERIES SERVICE --------------------------------------
 
-async function getAssignedDeliveriesService(deliveryPartnerId) {
+async function getAssignedDeliveriesService(deliveryPartnerId, currentUser = {}) {
   const orders = await DeliveryOrder.findAll({
     where: { deliveryPartnerId },
     include: [
       { model: Food, as: "food" },
       { model: User, as: "user", attributes: ["id", "fullName"] },
+      { model: Address, as: "addressInfo" },
     ],
     order: [["createdAt", "DESC"]],
   });
 
-  return orders.map(cleanOrderResponse);
+  return orders.map((order) => cleanOrderResponse(order, currentUser));
 }
 
 // ------------------------------- UPDATE DELIVERY STATUS SERVICE --------------------------------------
@@ -266,10 +345,11 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status) {
     include: [
       { model: Food, as: "food" },
       { model: User, as: "user", attributes: ["id", "fullName"] },
+      { model: Address, as: "addressInfo" },
     ],
   });
 
-  return cleanOrderResponse(updatedOrder);
+  return cleanOrderResponse(updatedOrder, { id: deliveryPartnerId, role: "delivery_partner" });
 }
 // ------------------------------- DELIVERY PARTNER PROFILE CHECK --------------------------------------
 

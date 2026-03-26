@@ -5,7 +5,7 @@ const { getCartService } = require("../services/cart.services");
 
 const placeOrder = async (req, res) => {
   try {
-    const { address, paymentMethod } = req.body;
+    const { addressId, addressLabel, paymentMethod } = req.body;
 
     // Fetch user's cart
     const cartItems = await getCartService(req.user.id);
@@ -20,7 +20,7 @@ const placeOrder = async (req, res) => {
     const orders = await deliveryService.placeOrderService(
       req.user.id,
       cartItems,
-      address,
+      { addressId, addressLabel },
       paymentMethod
     );
 
@@ -49,7 +49,7 @@ const getUserOrders = async (req, res) => {
       limit: Number(limit),
       sortBy,
       order,
-    });
+    }, req.user);
 
     res.status(200).json(result);
   } catch (err) {
@@ -70,7 +70,7 @@ const getAvailableOrders = async (req, res) => {
       limit: Number(limit),
       sortBy,
       order,
-    });
+    }, req.user);
 
     res.status(200).json(result);
   } catch (err) {
@@ -95,7 +95,7 @@ const acceptOrder = async (req, res) => {
 
 const getAssignedDeliveries = async (req, res) => {
   try {
-    const orders = await deliveryService.getAssignedDeliveriesService(req.user.id);
+    const orders = await deliveryService.getAssignedDeliveriesService(req.user.id, req.user);
     res.status(200).json({ orders });
   } catch (err) {
     console.error(err.message);

@@ -46,19 +46,35 @@ async function getCartService(userId) {
     include: ["food"],
   });
 
-  // Map to plain objects so foodId & quantity are directly accessible
-  return cartItems.map(item => ({
-    foodId: item.foodId,
-    quantity: item.quantity,
-    food: item.food ? {
-      id: item.food.id,
-      name: item.food.name,
-      description: item.food.description,
-      category: item.food.category,
-      price: item.food.price,
-      video: item.food.video,
-    } : null,
-  }));
+  if (!cartItems || cartItems.length === 0) {
+    return { cartItems: [], totalAmount: 0 };
+  }
+
+  const mappedItems = cartItems.map((item) => {
+    const foodData = item.food
+      ? {
+          id: item.food.id,
+          name: item.food.name,
+          description: item.food.description,
+          category: item.food.category,
+          price: item.food.price,
+          video: item.food.video,
+        }
+      : null;
+
+    const subTotal = foodData ? parseFloat(foodData.price) * item.quantity : 0;
+
+    return {
+      foodId: item.foodId,
+      quantity: item.quantity,
+      food: foodData,
+      subTotal,
+    };
+  });
+
+  const totalAmount = mappedItems.reduce((sum, item) => sum + item.subTotal, 0);
+
+  return { cartItems: mappedItems, totalAmount };
 }
 
 //------------------------------- UPDATE CART ITEM QUANTITY --------------------------------------

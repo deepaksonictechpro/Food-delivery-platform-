@@ -2,8 +2,11 @@ const Joi = require("joi");
 const { ORDER_STATUS } = require("../constants/orderStatus.constants");
 
 const placeOrderSchema = Joi.object({
-  address: Joi.string().min(5).required(),
-  paymentMethod: Joi.string().valid("cash", "card", "upi").required(),
+  addressId: Joi.number().integer().positive(),
+  addressLabel: Joi.string().trim().min(1),
+  paymentMethod: Joi.string().valid("cash", "card", "upi", "wallet").required(),
+}).or("addressId", "addressLabel").messages({
+  "object.missing": "Either addressId or addressLabel is required",
 });
 
 const updateDeliveryStatusSchema = Joi.object({
