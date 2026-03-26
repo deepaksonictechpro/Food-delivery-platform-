@@ -7,30 +7,41 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
+
     foodId: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
     },
+
     userId: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
     },
+
     deliveryPartnerId: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: true,
     },
+
     quantity: {
       type: DataTypes.INTEGER,
       defaultValue: 1,
     },
+
     addressId: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
+      references: {
+        model: "Addresses",
+        key: "id",
+      },
     },
+
     fullAddressSnapshot: {
       type: DataTypes.STRING,
       allowNull: false,
     },
+
     status: {
       type: DataTypes.ENUM(
         ORDER_STATUS.PENDING,
@@ -42,10 +53,12 @@ module.exports = (sequelize, DataTypes) => {
       ),
       defaultValue: ORDER_STATUS.PENDING,
     },
+
     paymentMethod: {
       type: DataTypes.STRING,
       allowNull: false,
     },
+
     earning: {
       type: DataTypes.FLOAT,
       defaultValue: 0,
@@ -53,8 +66,8 @@ module.exports = (sequelize, DataTypes) => {
 
     totalAmount: {
       type: DataTypes.DECIMAL(10, 2),
-      defaultValue: 0,
       allowNull: false,
+      defaultValue: 0,
     },
 
     // ================= CANCELLATION FIELDS =================
@@ -63,22 +76,27 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+
     cancelRequestedAt: {
       type: DataTypes.DATE,
       allowNull: true,
     },
+
     cancelApprovedBy: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: true,
     },
+
     cancelApprovedAt: {
       type: DataTypes.DATE,
       allowNull: true,
     },
+
     cancelDecisionReason: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+
     previousStatus: {
       type: DataTypes.STRING,
       allowNull: true,

@@ -7,10 +7,9 @@ const placeOrder = async (req, res) => {
   try {
     const { addressId, addressLabel, paymentMethod } = req.body;
 
-    // Fetch user's cart
-    const cartItems = await getCartService(req.user.id);
+    const { cartItems } = await getCartService(req.user.id);
 
-    if (!cartItems || cartItems.length === 0) {
+    if (!cartItems.length) {
       return res.status(400).json({
         success: false,
         message: "Cart is empty"
@@ -29,11 +28,13 @@ const placeOrder = async (req, res) => {
       message: "Order placed successfully",
       data: orders
     });
+
   } catch (err) {
     console.error("PLACE ORDER ERROR:", err.message);
+
     res.status(500).json({
       success: false,
-      message: "Failed to place order"
+      message: err.message 
     });
   }
 };

@@ -1,20 +1,18 @@
-'use strict';
+"use strict";
 
-/** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
-    await queryInterface.addColumn('foods', 'foodPartnerId', {
-      type: Sequelize.INTEGER.UNSIGNED,
-      allowNull: false,
-      references: {
-        model: 'users',
-        key: 'id'
-      },
-      onDelete: 'CASCADE'
-    });
+  async up(queryInterface, Sequelize) {
+    const table = await queryInterface.describeTable("Foods");
+
+    if (!table.foodPartnerId) {
+      await queryInterface.addColumn("Foods", "foodPartnerId", {
+        type: Sequelize.INTEGER.UNSIGNED,
+        allowNull: true,
+      });
+    }
   },
 
-  async down (queryInterface, Sequelize) {
-    await queryInterface.removeColumn('foods', 'foodPartnerId');
-  }
+  async down(queryInterface, Sequelize) {
+    await queryInterface.removeColumn("Foods", "foodPartnerId");
+  },
 };
