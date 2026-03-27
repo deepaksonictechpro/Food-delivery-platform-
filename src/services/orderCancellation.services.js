@@ -1,4 +1,6 @@
 const { DeliveryOrder, User, Food } = require("../models");
+const { sequelize } = require("../config/database");
+const { refundToWalletService } = require("./wallet.services");
 
 //------------------------------- REQUEST CANCEL ORDER --------------------------------------
 
@@ -21,17 +23,46 @@ const requestCancelOrderService = async (userId, orderId, reason) => {
 //------------------------------- ADMIN CANCEL DECISION --------------------------------------
 
 const handleCancelDecisionService = async (adminId, orderId, decision, adminReason) => {
-  const order = await DeliveryOrder.findByPk(orderId);
-  if (!order) throw new Error("Order not found");
-  if (order.status !== "cancel_requested") throw new Error("No cancel request found");
+  return await sequelize.transaction(async (t) => {
 
-  order.cancelApprovedBy = adminId;
-  order.cancelApprovedAt = new Date();
-  order.cancelDecisionReason = adminReason;
-  order.status = decision === "approve" ? "cancelled" : order.previousStatus;
+    const order = await DeliveryOrder.findByPk(orderId, { transaction: t });
 
-  await order.save();
-  return order;
+    if (!order) throw new Error("Order not found");
+    if (order.status !== "cancel_requested") {
+      throw new Error("No cancel request found");
+    }
+
+    order.cancelApprovedBy = adminId;
+    order.cancelApprovedAt = new Date();
+    order.cancelDecisionReason = adminReason;
+
+    // ---------------- APPROVE ----------------
+    if (decision === "approve") {
+
+      order.status = "cancelled";
+
+      await order.save({ transaction: t });
+
+      // 🔥 FIX: PASS SAME TRANSACTION
+      await refundToWalletService(order.userId, order.id, t);
+
+    }
+
+    // ---------------- REJECT ----------------
+    else if (decision === "reject") {
+
+      order.status = order.previousStatus;
+
+      await order.save({ transaction: t });
+
+    }
+
+    else {
+      throw new Error("Invalid decision");
+    }
+
+    return order;
+  });
 };
 
 //------------------------------- ADMIN: GET PENDING CANCEL REQUESTS --------------------------------------

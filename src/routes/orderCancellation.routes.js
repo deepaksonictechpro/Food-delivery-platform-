@@ -1,13 +1,22 @@
 const express = require("express");
 const router = express.Router();
+
 const {
   requestCancelOrder,
   handleCancelDecision,
   getPendingCancelRequests
 } = require("../controllers/orderCancellation.controller");
+
 const validate = require("../middlewares/validate.middleware");
-const { cancelRequestSchema, cancelDecisionSchema } = require("../validations/orderCancellation.validation");
-const { authUserMiddleware, authRoleMiddleware } = require("../middlewares/auth.middleware");
+const {
+  cancelRequestSchema,
+  cancelDecisionSchema
+} = require("../validations/orderCancellation.validation");
+
+const {
+  authUserMiddleware,
+  authRoleMiddleware
+} = require("../middlewares/auth.middleware");
 
 // --------------------------------- USER REQUESTS ORDER CANCELLATION --------------------------------
 

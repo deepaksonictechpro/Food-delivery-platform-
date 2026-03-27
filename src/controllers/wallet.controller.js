@@ -76,9 +76,43 @@ async function payWithWallet(req, res) {
   }
 }
 
+
+// ----------------------- REFUND API -------------------------
+
+const refundToWallet = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({ message: "orderId is required" });
+    }
+
+    const result = await walletService.refundToWalletService(
+      req.user.id,
+      orderId
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Refund successful",
+      data: result,
+    });
+
+  } catch (err) {
+    console.error("REFUND ERROR:", err.message);
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+
 module.exports = {
   getWallet,
   getWalletTransactions,
   addMoney,
   payWithWallet,
+  refundToWallet,
 };

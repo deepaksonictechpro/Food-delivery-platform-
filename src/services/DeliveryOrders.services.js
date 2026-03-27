@@ -348,6 +348,8 @@ async function checkDeliveryPartnerProfile(deliveryPartnerId) {
   return partner;
 }
 
+
+
 module.exports = {
   placeOrderService,
   getUserOrdersService,

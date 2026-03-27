@@ -142,9 +142,78 @@ async function payWithWalletService(userId, _amount, orderId) {
   });
 }
 
+// ----------------------- Refund to Wallet (ALL PAYMENT METHODS) -------------------------
+
+async function refundToWalletService(userId, orderId, t) {
+
+  const order = await DeliveryOrder.findByPk(orderId, { transaction: t });
+
+  if (!order) throw new Error("Order not found");
+  if (order.userId !== userId) throw new Error("Unauthorized refund");
+
+  if (order.status !== "cancelled") {
+    throw new Error("Refund allowed only for cancelled orders");
+  }
+
+  const existingRefund = await WalletTransaction.findOne({
+    where: {
+      userId,
+      referenceId: orderId,
+      transactionType: "refund",
+    },
+    transaction: t,
+  });
+
+  if (existingRefund) {
+    throw new Error("Refund already processed for this order");
+  }
+
+  const amount = parseFloat(order.totalAmount);
+  if (!amount || amount <= 0) {
+    throw new Error("Invalid refund amount");
+  }
+
+  let wallet = await Wallet.findOne({
+    where: { userId },
+    transaction: t,
+  });
+
+  if (!wallet) {
+    wallet = await Wallet.create(
+      { userId, balance: 0 },
+      { transaction: t }
+    );
+  }
+
+  const newBalance = parseFloat(wallet.balance) + amount;
+
+  await wallet.update({ balance: newBalance }, { transaction: t });
+
+  await WalletTransaction.create(
+    {
+      walletId: wallet.id,
+      userId,
+      type: "credit",
+      amount,
+      transactionType: "refund",
+      referenceId: orderId,
+      balanceAfterTransaction: newBalance,
+      status: "success",
+    },
+    { transaction: t }
+  );
+
+  return {
+    refundedAmount: amount,
+    balance: newBalance,
+  };
+}
+
+
 module.exports = {
   getWalletService,
   getWalletTransactionsService,
   addMoneyService,
   payWithWalletService,
+  refundToWalletService,
 };
