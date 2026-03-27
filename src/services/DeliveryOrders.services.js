@@ -3,6 +3,7 @@ const { DeliveryOrder, Food, User, Cart, Address } = require("../models");
 const { PER_DELIVERY_EARNING } = require("../constants/delivery.constants");
 const { ORDER_STATUS } = require("../constants/orderStatus.constants");
 const { getFoodPartnerStatus } = require("../utils/foodPartnerStatus");
+const { addEarningToWallet } = require("./deliveryPartnerWallet.services");
 
 //------------------------------- CLEAN ORDER RESPONSE --------------------------------------
 
@@ -124,6 +125,7 @@ async function placeOrderService(userId, cartItems, addressInput, paymentMethod)
       addressId: addressRecord.id,
       fullAddressSnapshot,
       paymentMethod,
+      paymentStatus: "pending",
       status: ORDER_STATUS.PENDING,
       earning: 0,
       totalAmount,
@@ -267,12 +269,8 @@ async function getAssignedDeliveriesService(deliveryPartnerId, currentUser = {})
 // ------------------------------- UPDATE DELIVERY STATUS SERVICE --------------------------------------
 
 async function updateDeliveryStatusService(orderId, deliveryPartnerId, status) {
-  if (
-    ![
-      ORDER_STATUS.PICKED_UP,
-      ORDER_STATUS.DELIVERED,
-    ].includes(status)
-  ) {
+
+  if (![ORDER_STATUS.PICKED_UP, ORDER_STATUS.DELIVERED].includes(status)) {
     throw new Error("Invalid status");
   }
 
@@ -286,9 +284,49 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status) {
 
   if (!order) throw new Error("Order not found");
 
-  order.status = status;
+  // PICKUP CHECK
+  if (
+    status === ORDER_STATUS.PICKED_UP &&
+    order.paymentMethod !== "COD" &&
+    order.paymentStatus !== "paid"
+  ) {
+    throw new Error("Cannot pickup unpaid order");
+  }
 
+  // DELIVERY CHECK
   if (status === ORDER_STATUS.DELIVERED) {
+
+    // ONLINE PAYMENT FIX
+    if (order.paymentMethod !== "COD") {
+
+      if (order.paymentStatus !== "paid") {
+
+        const paymentTx = await WalletTransaction.findOne({
+          where: {
+            userId: order.userId,
+            referenceId: order.id,
+            transactionType: "order_payment",
+            status: "success"
+          }
+        });
+
+        if (paymentTx) {
+          order.paymentStatus = "paid";
+          await order.save();
+        } else {
+          throw new Error("Online payment not completed");
+        }
+      }
+    }
+
+    // COD CHECK
+    if (
+      order.paymentMethod === "COD" &&
+      !order.cashCollected
+    ) {
+      throw new Error("Cash not collected yet");
+    }
+
     order.earning = PER_DELIVERY_EARNING;
 
     await User.increment(
@@ -300,8 +338,11 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status) {
         where: { id: deliveryPartnerId },
       }
     );
+
+    await addEarningToWallet(deliveryPartnerId, order.id);
   }
 
+  order.status = status;
   await order.save();
 
   const updatedOrder = await DeliveryOrder.findByPk(orderId, {

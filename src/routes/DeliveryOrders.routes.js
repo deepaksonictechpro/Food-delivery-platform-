@@ -55,7 +55,7 @@ router.get(
 );
 
 router.patch(
-  "/:id/status",
+  "/:orderId/status",
   authUserMiddleware,
   authRoleMiddleware(["delivery_partner"]),
   validate(updateDeliveryStatusSchema),

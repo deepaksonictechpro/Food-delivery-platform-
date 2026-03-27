@@ -1,5 +1,6 @@
 const { User } = require("../models");
 
+
 // ================= GET DELIVERY PARTNER PROFILE =================
 
 async function getDeliveryPartnerProfile(partnerId) {

@@ -81,66 +81,47 @@ async function addMoneyService(userId, amount) {
 
 //------------------------- Pay With Wallet -------------------------
 
-async function payWithWalletService(userId, _amount, orderId) {
-  return await sequelize.transaction(async (t) => {
+const payWithWalletService = async (userId, orderId) => {
+  const t = await sequelize.transaction();
+
+  try {
     const order = await DeliveryOrder.findByPk(orderId, { transaction: t });
+
     if (!order) throw new Error("Order not found");
-    if (order.userId !== userId) throw new Error("Unauthorized payment attempt");
 
-    const amount = parseFloat(order.totalAmount);
-    if (!amount || amount <= 0) {
-      throw new Error("Invalid order total amount");
+    if (order.paymentStatus === "paid") {
+      throw new Error("Order already paid");
     }
 
-    // Get wallet
-    const wallet = await Wallet.findOne({
-      where: { userId },
-      transaction: t,
-    });
+    const wallet = await Wallet.findOne({ where: { userId }, transaction: t });
 
-    if (!wallet) {
-      throw new Error("Wallet not found");
-    }
-
-    // Check balance
-    if (parseFloat(wallet.balance) < amount) {
+    if (!wallet || wallet.balance < order.totalAmount) {
       throw new Error("Insufficient wallet balance");
     }
 
-    // Deduct balance
-    const newBalance = parseFloat(wallet.balance) - amount;
+    wallet.balance -= order.totalAmount;
+    await wallet.save({ transaction: t });
 
-    await wallet.update(
-      { balance: newBalance },
-      { transaction: t }
-    );
+    // FIXED
+    order.paymentStatus = "paid";
+    await order.save({ transaction: t });
 
-    // Create transaction
-    await WalletTransaction.create(
-      {
-        walletId: wallet.id,
-        userId,
-        type: "debit",
-        amount,
-        transactionType: "order_payment",
-        referenceId: orderId,
-        balanceAfterTransaction: newBalance,
-        status: "success",
-      },
-      { transaction: t }
-    );
+    await WalletTransaction.create({
+      userId,
+      amount: order.totalAmount,
+      transactionType: "order_payment",
+      referenceId: order.id,
+      status: "success",
+    }, { transaction: t });
 
-    // update order status
-    await DeliveryOrder.update(
-      { paymentStatus: "paid" },
-      { where: { id: orderId }, transaction: t }
-    );
+    await t.commit();
+    return order;
 
-    return {
-      balance: newBalance,
-    };
-  });
-}
+  } catch (err) {
+    await t.rollback();
+    throw err;
+  }
+};
 
 // ----------------------- Refund to Wallet (ALL PAYMENT METHODS) -------------------------
 

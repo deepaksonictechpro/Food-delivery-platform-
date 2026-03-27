@@ -1,5 +1,6 @@
 const deliveryService = require("../services/DeliveryOrders.services");
 const { getCartService } = require("../services/cart.services");
+const { updateDeliveryStatusService } = require("../services/DeliveryOrders.services");
 
 //------------------------------- PLACE ORDER FROM CART --------------------------------------
 
@@ -108,17 +109,38 @@ const getAssignedDeliveries = async (req, res) => {
 
 const updateDeliveryStatus = async (req, res) => {
   try {
-    const order = await deliveryService.updateDeliveryStatusService(
-      req.params.id,
+    const { id } = req.params; // route param
+    const { status, cashCollected } = req.body;
+
+    if (!id) {
+      throw new Error("Order id is required"); 
+    }
+
+    if (!status) {
+      throw new Error("Status is required"); 
+    }
+
+    const order = await updateDeliveryStatusService(
+      id,
       req.user.id,
-      req.body.status
+      status,
+      cashCollected
     );
-    res.status(200).json({ message: "Status updated", order });
+
+    res.json({
+      success: true,
+      message: "Status updated",
+      data: order,
+    });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ message: err.message });
+    console.error("DELIVERY STATUS ERROR:", err.message);
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
+
 
 module.exports = {
   placeOrder,
