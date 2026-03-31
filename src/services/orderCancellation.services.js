@@ -1,4 +1,4 @@
-const { DeliveryOrder, User, Food } = require("../models");
+const { Order, User, Food, OrderItem } = require("../models");
 const { sequelize } = require("../config/database");
 const { refundToWalletService } = require("./wallet.services");
 const { ORDER_STATUS } = require("../constants/orderStatus.constants");
@@ -6,7 +6,7 @@ const { ORDER_STATUS } = require("../constants/orderStatus.constants");
 //------------------------------- REQUEST CANCEL ORDER --------------------------------------
 
 const requestCancelOrderService = async (userId, orderId, reason) => {
-  const order = await DeliveryOrder.findByPk(orderId);
+  const order = await Order.findByPk(orderId);
   if (!order) throw new Error("Order not found");
   if (order.userId !== userId) throw new Error("You cannot cancel this order");
   if ([ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(order.status))
@@ -26,7 +26,7 @@ const requestCancelOrderService = async (userId, orderId, reason) => {
 const handleCancelDecisionService = async (adminId, orderId, decision, adminReason) => {
   return await sequelize.transaction(async (t) => {
 
-    const order = await DeliveryOrder.findByPk(orderId, { transaction: t });
+    const order = await Order.findByPk(orderId, { transaction: t });
 
     if (!order) throw new Error("Order not found");
     if (order.status !== ORDER_STATUS.CANCEL_REQUESTED) {
@@ -69,11 +69,11 @@ const handleCancelDecisionService = async (adminId, orderId, decision, adminReas
 //------------------------------- ADMIN: GET PENDING CANCEL REQUESTS --------------------------------------
 
 const getPendingCancelRequestsService = async () => {
-  const orders = await DeliveryOrder.findAll({
+  const orders = await Order.findAll({
     where: { status: ORDER_STATUS.CANCEL_REQUESTED },
     include: [
       { model: User, as: "user", attributes: ["id", "fullName", "email"] },
-      { model: Food, as: "food", attributes: ["id", "name", "price"] },
+      { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
     ],
     order: [["cancelRequestedAt", "DESC"]],
   });

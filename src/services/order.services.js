@@ -1,5 +1,5 @@
 const { sequelize } = require("../models");
-const { DeliveryOrder, Food, User, Cart, Address } = require("../models");
+const { Order, OrderItem, Food, User, Cart, Address, WalletTransaction } = require("../models");
 const { PER_DELIVERY_EARNING } = require("../constants/delivery.constants");
 const { ORDER_STATUS } = require("../constants/orderStatus.constants");
 const { getFoodPartnerStatus } = require("../utils/foodPartnerStatus");
@@ -19,25 +19,21 @@ function cleanOrderResponse(order, currentUser = {}) {
   const response = {
     id: order.id,
     totalAmount: parseFloat(order.totalAmount) || 0,
-    items: order.food
-      ? [{
-          foodId: order.foodId,
-          name: order.food.name,
-          quantity: order.quantity,
-          price: order.food.price,
-          subtotal: parseFloat(order.food.price) * order.quantity,
-        }]
-      : [],
+    items: order.items.map(item => ({
+      foodId: item.foodId,
+      name: item.food.name,
+      quantity: item.quantity,
+      price: parseFloat(item.price),
+      subtotal: parseFloat(item.price) * item.quantity,
+    })),
     address: {
       id: order.addressId,
       label: order.addressInfo?.label,
-      fullAddress:
-        order.fullAddressSnapshot || order.addressInfo?.address,
+      fullAddress: order.addressInfo?.address,
     },
     status: order.status,
     paymentMethod: order.paymentMethod,
     deliveryPartnerId: order.deliveryPartnerId,
-    food: order.food || undefined,
     user: order.user
       ? { id: order.user.id, fullName: order.user.fullName }
       : undefined,
@@ -74,92 +70,45 @@ async function placeOrderService(userId, cartItems, addressInput, paymentMethod)
 
   if (!addressRecord) throw new Error("Address not found or unauthorized");
 
-  const fullAddressSnapshot = `${addressRecord.label}, ${addressRecord.address}, ${addressRecord.city}, ${addressRecord.state}, ${addressRecord.zipCode}, ${addressRecord.country}`;
-
   return await sequelize.transaction(async (transaction) => {
     const foodIds = cartItems.map(i => i.foodId);
+    const foods = await Food.findAll({ where: { id: foodIds }, transaction });
 
-    const foods = await Food.findAll({
-      where: { id: foodIds },
-      include: [{
-        model: User,
-        as: "foodPartner",
-        attributes: ["openingTime", "closingTime"],
-      }],
-      transaction,
-    });
-
-    for (const food of foods) {
-      const status = getFoodPartnerStatus(
-        food.foodPartner?.openingTime,
-        food.foodPartner?.closingTime
-      );
-
-      if (status === "CLOSED") {
-        throw new Error(`Food Partner for "${food.name}" is currently closed`);
-      }
-    }
-
-    const foodMap = {};
-    foods.forEach(f => (foodMap[f.id] = f));
+    const foodMap = new Map(foods.map(f => [f.id, f]));
 
     let totalAmount = 0;
-
-    const cartQuantities = cartItems.map(item => {
-      if (!item.foodId) throw new Error("Cart item missing foodId");
-      if (!item.quantity || item.quantity <= 0) throw new Error("Invalid quantity");
-
-      const food = foodMap[item.foodId];
+    const orderItemsData = cartItems.map(item => {
+      const food = foodMap.get(item.foodId);
       if (!food) throw new Error(`Food item ${item.foodId} not found`);
-
-      const subtotal = parseFloat(food.price) * item.quantity;
-      totalAmount += subtotal;
-
-      return { foodId: item.foodId, quantity: item.quantity };
+      const price = parseFloat(food.price);
+      totalAmount += price * item.quantity;
+      return { foodId: item.foodId, quantity: item.quantity, price };
     });
 
-    const orderData = cartQuantities.map(item => {
-      const food = foodMap[item.foodId];
-      const subtotal = parseFloat(food.price) * item.quantity;
+    const order = await Order.create({
+      userId,
+      addressId: addressRecord.id,
+      totalAmount,
+      paymentMethod,
+      status: ORDER_STATUS.PENDING,
+      paymentStatus: 'PENDING',
+    }, { transaction });
 
-      return {
-        foodId: item.foodId,
-        userId,
-        quantity: item.quantity,
-        addressId: addressRecord.id,
-        fullAddressSnapshot,
-        paymentMethod,
-        paymentStatus: "PENDING",
-        status: ORDER_STATUS.PENDING,
-        earning: 0,
-        totalAmount: subtotal,
-      };
-    });
+    const finalOrderItems = orderItemsData.map(item => ({ ...item, orderId: order.id }));
+    await OrderItem.bulkCreate(finalOrderItems, { transaction });
 
-    const createdOrders = await DeliveryOrder.bulkCreate(orderData, {
-      transaction,
-      returning: true,
-    });
+    await Cart.destroy({ where: { userId, foodId: foodIds }, transaction });
 
-    const deletedCount = await Cart.destroy({
-      where: { userId, foodId: foodIds },
-      transaction,
-    });
-
-    if (deletedCount < cartItems.length) {
-      throw new Error("Cart cleanup failed");
-    }
-
-    const orders = await DeliveryOrder.findAll({
-      where: { id: createdOrders.map(o => o.id) },
+    const createdOrder = await Order.findByPk(order.id, {
       include: [
-        { model: Food, as: "food" },
-        { model: Address, as: "addressInfo" },
+        { model: User, as: 'user', attributes: ['id', 'fullName'] },
+        { model: Address, as: 'addressInfo' },
+        { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
       ],
       transaction,
     });
 
-    return orders.map(cleanOrderResponse);
+    return createdOrder;
   });
 }
 
@@ -172,11 +121,11 @@ async function getUserOrdersService(
 ) {
   const offset = (page - 1) * limit;
 
-  const { count, rows } = await DeliveryOrder.findAndCountAll({
+  const { count, rows } = await Order.findAndCountAll({
     where: { userId },
     include: [
-      { model: Food, as: "food" },
       { model: Address, as: "addressInfo" },
+      { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
     ],
     order: [[sortBy, order.toUpperCase()]],
     limit,
@@ -203,15 +152,15 @@ async function getAvailableOrdersService({
 } = {}, currentUser = {}) {
   const offset = (page - 1) * limit;
 
-  const { count, rows } = await DeliveryOrder.findAndCountAll({
+  const { count, rows } = await Order.findAndCountAll({
     where: {
       deliveryPartnerId: null,
       status: ORDER_STATUS.PENDING,
     },
     include: [
-      { model: Food, as: "food" },
       { model: User, as: "user", attributes: ["id", "fullName"] },
       { model: Address, as: "addressInfo" },
+      { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
     ],
     order: [[sortBy, order.toUpperCase()]],
     limit,
@@ -233,15 +182,15 @@ async function getAvailableOrdersService({
 async function acceptOrderService(orderId, deliveryPartnerId) {
   await checkDeliveryPartnerProfile(deliveryPartnerId);
 
-  const order = await DeliveryOrder.findOne({
+  const order = await Order.findOne({
     where: {
       id: orderId,
       status: ORDER_STATUS.PENDING,
       deliveryPartnerId: null,
     },
     include: [
-      { model: Food, as: "food" },
       { model: User, as: "user", attributes: ["id", "fullName"] },
+      { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
     ],
   });
 
@@ -258,12 +207,12 @@ async function acceptOrderService(orderId, deliveryPartnerId) {
 //------------------------------- GET ASSIGNED DELIVERIES SERVICE --------------------------------------
 
 async function getAssignedDeliveriesService(deliveryPartnerId, currentUser = {}) {
-  const orders = await DeliveryOrder.findAll({
+  const orders = await Order.findAll({
     where: { deliveryPartnerId },
     include: [
-      { model: Food, as: "food" },
       { model: User, as: "user", attributes: ["id", "fullName"] },
       { model: Address, as: "addressInfo" },
+      { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
     ],
     order: [["createdAt", "DESC"]],
   });
@@ -279,11 +228,11 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, c
     throw new Error("Invalid status");
   }
 
-  const order = await DeliveryOrder.findOne({
+  const order = await Order.findOne({
     where: { id: orderId, deliveryPartnerId },
     include: [
-      { model: Food, as: "food" },
       { model: User, as: "user", attributes: ["id", "fullName"] },
+      { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
     ],
   });
 
@@ -355,11 +304,11 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, c
   order.status = status;
   await order.save();
 
-  const updatedOrder = await DeliveryOrder.findByPk(orderId, {
+  const updatedOrder = await Order.findByPk(orderId, {
     include: [
-      { model: Food, as: "food" },
       { model: User, as: "user", attributes: ["id", "fullName"] },
       { model: Address, as: "addressInfo" },
+      { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
     ],
   });
 

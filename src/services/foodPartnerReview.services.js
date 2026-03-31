@@ -1,4 +1,4 @@
-const { FoodPartnerReviews, DeliveryOrder, Food, User } = require("../models");
+const { FoodPartnerReviews, Order, OrderItem, Food, User } = require("../models");
 const { ORDER_STATUS } = require("../constants/orderStatus.constants");
 const { getPagination, getPagingData } = require("../utils/pagination.utility");
 
@@ -14,16 +14,22 @@ async function createPartnerReviewService({ userId, foodPartnerId, rating, revie
   }
 
 
-  const order = await DeliveryOrder.findOne({
+  const order = await Order.findOne({
     where: {
       userId,
       status: ORDER_STATUS.DELIVERED,
     },
     include: [
       {
-        model: Food,
-        as: "food",
-        where: { foodPartnerId },
+        model: OrderItem,
+        as: 'items',
+        include: [
+          {
+            model: Food,
+            as: "food",
+            where: { foodPartnerId },
+          }
+        ]
       },
     ],
   });

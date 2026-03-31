@@ -1,20 +1,26 @@
-const { User, Food, DeliveryOrder, Review } = require("../models");
+const { User, Food, Order, OrderItem, Review } = require("../models");
 const { Op, Sequelize } = require("sequelize");
+const { ORDER_STATUS } = require("../constants/orderStatus.constants");
 
 //------------------------------- FOOD PARTNER DASHBOARD SERVICE --------------------------------------
 
 async function fetchFoodPartnerDashboard(foodPartnerId) {
-  const totalOrders = await DeliveryOrder.count({
+  const totalOrders = await Order.count({
     include: [
       {
-        model: Food,
-        as: "food",
-        where: { foodPartnerId },
+        model: OrderItem,
+        as: "items",
+        required: true,
+        include: [{
+          model: Food,
+          as: "food",
+          where: { foodPartnerId },
+        }]
       },
     ],
   });
 
-  const totalRevenueData = await DeliveryOrder.findAll({
+  const totalRevenueData = await OrderItem.findAll({
     include: [
       {
         model: Food,
@@ -22,16 +28,21 @@ async function fetchFoodPartnerDashboard(foodPartnerId) {
         where: { foodPartnerId },
         attributes: [],
       },
+      {
+        model: Order,
+        as: 'order',
+        where: { status: ORDER_STATUS.DELIVERED },
+        attributes: []
+      }
     ],
     attributes: [
-      [Sequelize.fn("SUM", Sequelize.literal("quantity * food.price")), "totalRevenue"],
+      [Sequelize.fn("SUM", Sequelize.literal("OrderItem.quantity * OrderItem.price")), "totalRevenue"],
     ],
-    where: { status: "delivered" },
     raw: true,
   });
   const totalRevenue = totalRevenueData[0].totalRevenue || 0;
 
-  const bestSellingFoods = await DeliveryOrder.findAll({
+  const bestSellingFoods = await OrderItem.findAll({
     include: [
       {
         model: Food,
@@ -87,7 +98,7 @@ async function fetchAdminDashboardStats() {
     Food.count(),
     User.count({ where: { role: "food_partner" } }),
     User.count({ where: { role: "delivery_partner" } }),
-    DeliveryOrder.count(),
+    Order.count(),
   ]);
 
   const reviewStats = await Review.findOne({

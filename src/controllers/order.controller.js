@@ -1,6 +1,6 @@
-const deliveryService = require("../services/DeliveryOrders.services");
+const orderService = require("../services/order.services");
 const { getCartService } = require("../services/cart.services");
-const { updateDeliveryStatusService } = require("../services/DeliveryOrders.services");
+const { updateDeliveryStatusService } = require("../services/order.services");
 
 //------------------------------- PLACE ORDER FROM CART --------------------------------------
 
@@ -17,7 +17,7 @@ const placeOrder = async (req, res) => {
       });
     }
 
-    const orders = await deliveryService.placeOrderService(
+    const orders = await orderService.placeOrderService(
       req.user.id,
       cartItems,
       { addressId, addressLabel },
@@ -46,7 +46,7 @@ const getUserOrders = async (req, res) => {
   try {
     const { page = 1, limit = 10, sortBy = "createdAt", order = "DESC" } = req.query;
 
-    const result = await deliveryService.getUserOrdersService(req.user.id, {
+    const result = await orderService.getUserOrdersService(req.user.id, {
       page: Number(page),
       limit: Number(limit),
       sortBy,
@@ -67,7 +67,7 @@ const getAvailableOrders = async (req, res) => {
   try {
     const { page = 1, limit = 10, sortBy = "createdAt", order = "DESC" } = req.query;
 
-    const result = await deliveryService.getAvailableOrdersService({
+    const result = await orderService.getAvailableOrdersService({
       page: Number(page),
       limit: Number(limit),
       sortBy,
@@ -85,7 +85,7 @@ const getAvailableOrders = async (req, res) => {
 
 const acceptOrder = async (req, res) => {
   try {
-    const order = await deliveryService.acceptOrderService(req.params.id, req.user.id);
+    const order = await orderService.acceptOrderService(req.params.id, req.user.id);
     res.status(200).json({ message: "Order assigned successfully", order });
   } catch (err) {
     console.error(err.message);
@@ -97,7 +97,7 @@ const acceptOrder = async (req, res) => {
 
 const getAssignedDeliveries = async (req, res) => {
   try {
-    const orders = await deliveryService.getAssignedDeliveriesService(req.user.id, req.user);
+    const orders = await orderService.getAssignedDeliveriesService(req.user.id, req.user);
     res.status(200).json({ orders });
   } catch (err) {
     console.error(err.message);

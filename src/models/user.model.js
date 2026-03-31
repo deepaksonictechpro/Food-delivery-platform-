@@ -156,8 +156,8 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     // Orders placed by user
-    if (models.DeliveryOrder) {
-      User.hasMany(models.DeliveryOrder, {
+    if (models.Order) {
+      User.hasMany(models.Order, {
         foreignKey: { name: "userId", allowNull: false },
         as: "orders",
         constraints: true,
@@ -165,7 +165,7 @@ module.exports = (sequelize, DataTypes) => {
       });
 
       // Orders handled by delivery partner
-      User.hasMany(models.DeliveryOrder, {
+      User.hasMany(models.Order, {
         foreignKey: { name: "deliveryPartnerId", allowNull: true },
         as: "assignedDeliveries",
         constraints: true,

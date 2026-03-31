@@ -29,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
       },
 
       referenceId: {
-        type: DataTypes.INTEGER.UNSIGNED, // refers to DeliveryOrder.id
+        type: DataTypes.INTEGER.UNSIGNED, // refers to Order.id
       },
 
       balanceAfterTransaction: {

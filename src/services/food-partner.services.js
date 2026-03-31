@@ -1,4 +1,4 @@
-const { DeliveryOrder, Food, User } = require("../models");
+const { Order, OrderItem, Food, User } = require("../models");
 
 // ===== Food Partner =====
 async function fetchFoodPartnerById(id) {
@@ -17,13 +17,21 @@ async function fetchFoodPartnerById(id) {
 }
 
 async function getFoodOrdersService(foodPartnerId) {
-  const foods = await Food.findAll({ where: { foodPartnerId }, attributes: ["id"] });
-  const foodIds = foods.map(f => f.id);
-
-  const orders = await DeliveryOrder.findAll({
-    where: { foodId: foodIds },
+  const orders = await Order.findAll({
     include: [
-      { model: Food, as: "food", attributes: ["id", "name", "price", "video"] },
+      {
+        model: OrderItem,
+        as: 'items',
+        required: true,
+        include: [
+          {
+            model: Food,
+            as: 'food',
+            where: { foodPartnerId },
+            attributes: ["id", "name", "price", "video"]
+          }
+        ]
+      },
       { model: User, as: "user", attributes: ["id", "fullName"] }
     ],
     order: [["createdAt", "DESC"]]

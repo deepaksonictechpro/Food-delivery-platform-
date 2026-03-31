@@ -92,10 +92,10 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
 
-    // Food → Delivery Orders
-    Food.hasMany(models.DeliveryOrder, {
+    // Food → Order Items
+    Food.hasMany(models.OrderItem, {
       foreignKey: "foodId",
-      as: "orders",
+      as: "orderItems",
     });
   };
 

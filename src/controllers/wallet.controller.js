@@ -63,7 +63,6 @@ async function payWithWallet(req, res) {
 
     const result = await walletService.payWithWalletService(
       req.user.id,
-      null,
       orderId
     );
 

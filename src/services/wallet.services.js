@@ -1,4 +1,4 @@
-const { Wallet, WalletTransaction, DeliveryOrder  } = require("../models");
+const { Wallet, WalletTransaction, Order } = require("../models");
 const { getPagination, getPagingData } = require("../utils/pagination.utility");
 const {sequelize} = require("../config/database"); // adjust path if needed
 
@@ -85,7 +85,7 @@ const payWithWalletService = async (userId, orderId) => {
   const t = await sequelize.transaction();
 
   try {
-    const order = await DeliveryOrder.findByPk(orderId, { transaction: t });
+    const order = await Order.findByPk(orderId, { transaction: t });
 
     if (!order) throw new Error("Order not found");
 
@@ -95,11 +95,11 @@ const payWithWalletService = async (userId, orderId) => {
 
     const wallet = await Wallet.findOne({ where: { userId }, transaction: t });
 
-    if (!wallet || wallet.balance < order.totalAmount) {
+    if (!wallet || parseFloat(wallet.balance) < parseFloat(order.totalAmount)) {
       throw new Error("Insufficient wallet balance");
     }
 
-    wallet.balance -= order.totalAmount;
+    wallet.balance = parseFloat(wallet.balance) - parseFloat(order.totalAmount);
     await wallet.save({ transaction: t });
 
     // FIXED
@@ -107,10 +107,13 @@ const payWithWalletService = async (userId, orderId) => {
     await order.save({ transaction: t });
 
     await WalletTransaction.create({
+      walletId: wallet.id,
       userId,
+      type: "debit",
       amount: order.totalAmount,
       transactionType: "order_payment",
       referenceId: order.id,
+      balanceAfterTransaction: wallet.balance,
       status: "success",
     }, { transaction: t });
 
@@ -127,7 +130,7 @@ const payWithWalletService = async (userId, orderId) => {
 
 async function refundToWalletService(userId, orderId, t) {
 
-  const order = await DeliveryOrder.findByPk(orderId, { transaction: t });
+  const order = await Order.findByPk(orderId, { transaction: t });
 
   if (!order) throw new Error("Order not found");
   if (order.userId !== userId) throw new Error("Unauthorized refund");

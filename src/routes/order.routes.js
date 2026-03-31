@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const deliveryController = require("../controllers/DeliveryOrders.controller");
+const orderController = require("../controllers/order.controller");
 const validate = require("../middlewares/validate.middleware");
 const {
   placeOrderSchema,
   updateDeliveryStatusSchema,
-} = require("../validations/DeliveryOrders.validation");
+} = require("../validations/order.validation");
 
 const {
   authUserMiddleware,
@@ -19,14 +19,14 @@ router.post(
   authUserMiddleware,
   authRoleMiddleware(["user"]),
   validate(placeOrderSchema), 
-  deliveryController.placeOrder
+  orderController.placeOrder
 );
 
 router.get(
   "/my-orders",
   authUserMiddleware,
   authRoleMiddleware(["user"]),
-  deliveryController.getUserOrders
+  orderController.getUserOrders
 );
 
 
@@ -34,32 +34,32 @@ router.get(
 //================================= DELIVERY PARTNER APIS ======================================
 
 router.get(
-  "/available",
+  "/available-orders",
   authUserMiddleware,
   authRoleMiddleware(["delivery_partner"]),
-  deliveryController.getAvailableOrders
+  orderController.getAvailableOrders
 );
 
 router.post(
-  "/:id/accept",
+  "/accept-order/:id",
   authUserMiddleware,
   authRoleMiddleware(["delivery_partner"]),
-  deliveryController.acceptOrder
+  orderController.acceptOrder
 );
 
 router.get(
-  "/assigned",
+  "/assigned-deliveries",
   authUserMiddleware,
   authRoleMiddleware(["delivery_partner"]),
-  deliveryController.getAssignedDeliveries
+  orderController.getAssignedDeliveries
 );
 
 router.patch(
-  "/:orderId/status",
+  "/update-status/:orderId",
   authUserMiddleware,
   authRoleMiddleware(["delivery_partner"]),
   validate(updateDeliveryStatusSchema),
-  deliveryController.updateDeliveryStatus
+  orderController.updateDeliveryStatus
 );
 
 module.exports = router;

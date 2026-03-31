@@ -1,5 +1,6 @@
-const { Review, Food, DeliveryOrder, sequelize, User } = require("../models");
+const { Review, Food, Order, OrderItem, sequelize, User } = require("../models");
 const { getPagination, getPagingData } = require("../utils/pagination.utility");
+const { ORDER_STATUS } = require("../constants/orderStatus.constants");
 
 //------------------------------- CREATE REVIEW ----------------------------------------------
 
@@ -7,8 +8,13 @@ async function createReviewService({ userId, foodId, rating, review }) {
   const food = await Food.findByPk(foodId);
   if (!food) throw new Error("Food not found");
 
-  const order = await DeliveryOrder.findOne({
-    where: { userId, foodId, status: "delivered" },
+  const order = await Order.findOne({
+    where: { userId, status: ORDER_STATUS.DELIVERED },
+    include: [{
+      model: OrderItem,
+      as: 'items',
+      where: { foodId }
+    }]
   });
 
   if (!order) {
