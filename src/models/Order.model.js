@@ -45,6 +45,38 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('PENDING', 'PAID'),
       defaultValue: 'PENDING',
     },
+    cancelReason: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    cancelRequestedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    cancelApprovedBy: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: true,
+    },
+    cancelApprovedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    cancelDecisionReason: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    previousStatus: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    earning: {
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 0,
+    },
+    cashCollected: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   }, {
     sequelize,
     modelName: 'Order',
