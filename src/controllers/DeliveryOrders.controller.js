@@ -109,10 +109,10 @@ const getAssignedDeliveries = async (req, res) => {
 
 const updateDeliveryStatus = async (req, res) => {
   try {
-    const { id } = req.params; // route param
+    const { orderId } = req.params; // Corrected from id to orderId
     const { status, cashCollected } = req.body;
 
-    if (!id) {
+    if (!orderId) {
       throw new Error("Order id is required"); 
     }
 
@@ -121,7 +121,7 @@ const updateDeliveryStatus = async (req, res) => {
     }
 
     const order = await updateDeliveryStatusService(
-      id,
+      orderId,
       req.user.id,
       status,
       cashCollected

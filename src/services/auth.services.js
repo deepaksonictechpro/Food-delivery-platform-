@@ -194,7 +194,7 @@ async function resetPasswordService(email, newPassword) {
 
   if (!user.isOtpVerified) throw new Error("Please verify OTP first");
 
-  user.password = await bcrypt.hash(newPassword, 10);
+  user.password = newPassword;
   user.otp = null;
   user.otpExpiresAt = null;
   user.otpAttempts = 0;
@@ -222,6 +222,40 @@ async function updateFoodPartnerTimingService(userId, { openingTime, closingTime
   return user;
 }
 
+//------------------------- LOGOUT SERVICE -------------------------
+
+async function logoutService() {
+  return { message: "Logged out successfully" };
+}
+
+//------------------------- FETCH USER PROFILE -------------------------
+
+async function fetchUserProfile(userId) {
+  const user = await User.findByPk(userId, {
+    attributes: { exclude: ["password", "otp", "otpExpiresAt", "otpAttempts"] },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
+}
+
+//------------------------- UPDATE USER PROFILE -------------------------
+
+async function updateUserProfile(userId, data) {
+  const user = await User.findByPk(userId);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  await user.update(data);
+
+  return user;
+}
+
 
 module.exports = {
   registerUserService,
@@ -231,4 +265,7 @@ module.exports = {
   verifyForgotPasswordOtpService,
   resetPasswordService,
   updateFoodPartnerTimingService,
+  logoutService,
+  fetchUserProfile,
+  updateUserProfile,
 };

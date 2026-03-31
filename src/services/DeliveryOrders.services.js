@@ -18,7 +18,7 @@ function cleanOrderResponse(order, currentUser = {}) {
 
   const response = {
     id: order.id,
-    totalAmount: order.totalAmount || 0,
+    totalAmount: parseFloat(order.totalAmount) || 0,
     items: order.food
       ? [{
           foodId: order.foodId,
@@ -118,18 +118,23 @@ async function placeOrderService(userId, cartItems, addressInput, paymentMethod)
       return { foodId: item.foodId, quantity: item.quantity };
     });
 
-    const orderData = cartQuantities.map(item => ({
-      foodId: item.foodId,
-      userId,
-      quantity: item.quantity,
-      addressId: addressRecord.id,
-      fullAddressSnapshot,
-      paymentMethod,
-      paymentStatus: "pending",
-      status: ORDER_STATUS.PENDING,
-      earning: 0,
-      totalAmount,
-    }));
+    const orderData = cartQuantities.map(item => {
+      const food = foodMap[item.foodId];
+      const subtotal = parseFloat(food.price) * item.quantity;
+
+      return {
+        foodId: item.foodId,
+        userId,
+        quantity: item.quantity,
+        addressId: addressRecord.id,
+        fullAddressSnapshot,
+        paymentMethod,
+        paymentStatus: "PENDING",
+        status: ORDER_STATUS.PENDING,
+        earning: 0,
+        totalAmount: subtotal,
+      };
+    });
 
     const createdOrders = await DeliveryOrder.bulkCreate(orderData, {
       transaction,
@@ -268,7 +273,7 @@ async function getAssignedDeliveriesService(deliveryPartnerId, currentUser = {})
 
 // ------------------------------- UPDATE DELIVERY STATUS SERVICE --------------------------------------
 
-async function updateDeliveryStatusService(orderId, deliveryPartnerId, status) {
+async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, cashCollected = null) {
 
   if (![ORDER_STATUS.PICKED_UP, ORDER_STATUS.DELIVERED].includes(status)) {
     throw new Error("Invalid status");
@@ -284,11 +289,16 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status) {
 
   if (!order) throw new Error("Order not found");
 
+  // Update cashCollected if provided
+  if (cashCollected !== null) {
+    order.cashCollected = !!cashCollected;
+  }
+
   // PICKUP CHECK
   if (
     status === ORDER_STATUS.PICKED_UP &&
     order.paymentMethod !== "COD" &&
-    order.paymentStatus !== "paid"
+    order.paymentStatus !== "PAID"
   ) {
     throw new Error("Cannot pickup unpaid order");
   }
@@ -299,7 +309,7 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status) {
     // ONLINE PAYMENT FIX
     if (order.paymentMethod !== "COD") {
 
-      if (order.paymentStatus !== "paid") {
+      if (order.paymentStatus !== "PAID") {
 
         const paymentTx = await WalletTransaction.findOne({
           where: {
@@ -311,8 +321,8 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status) {
         });
 
         if (paymentTx) {
-          order.paymentStatus = "paid";
-          await order.save();
+          order.paymentStatus = "PAID";
+          // We will save later below
         } else {
           throw new Error("Online payment not completed");
         }

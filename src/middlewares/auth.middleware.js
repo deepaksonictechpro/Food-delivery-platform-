@@ -39,24 +39,12 @@ const authRoleMiddleware = (roles = []) => (req, res, next) => {
 
 //------------------------------- AUTHORIZE ADMIN ACCESS --------------------------------------
 const authAdminMiddleware = async (req, res, next) => {
-  try {
-    const token = getTokenFromRequest(req);
-
-    if (!token) return res.status(401).json({ message: "Admin login required" });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findByPk(decoded.id);
-
-    if (!user || user.role !== "admin") {
+  authUserMiddleware(req, res, () => {
+    if (req.user.role !== "admin") {
       return res.status(403).json({ message: "Admin access only" });
     }
-
-    req.user = user; // standardize to req.user
     next();
-  } catch (err) {
-    console.error("[AuthAdminMiddleware]", err.message);
-    return res.status(401).json({ message: "Invalid or expired token" });
-  }
+  });
 };
 
 module.exports = {

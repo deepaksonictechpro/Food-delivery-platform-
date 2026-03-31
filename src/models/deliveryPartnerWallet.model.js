@@ -3,18 +3,18 @@ module.exports = (sequelize, DataTypes) => {
     "DeliveryPartnerWallet",
     {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.INTEGER.UNSIGNED,
         primaryKey: true,
         autoIncrement: true,
       },
 
       deliveryPartnerId: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.INTEGER.UNSIGNED,
         allowNull: false,
       },
 
       amount: {
-        type: DataTypes.FLOAT,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
       },
 
@@ -24,15 +24,16 @@ module.exports = (sequelize, DataTypes) => {
       },
 
       transactionType: {
-        type: DataTypes.STRING, // delivery_earning
+        type: DataTypes.ENUM("delivery_earning", "withdraw", "adjustment"),
+        allowNull: false,
       },
 
       referenceId: {
-        type: DataTypes.INTEGER, // orderId
+        type: DataTypes.INTEGER.UNSIGNED, // refers to DeliveryOrder.id
       },
 
       balanceAfterTransaction: {
-        type: DataTypes.FLOAT,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
       },
 

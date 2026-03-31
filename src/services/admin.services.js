@@ -19,12 +19,10 @@ async function createAdminService({ fullName, email, password }) {
     throw new Error("Admin already exists");
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-
   const admin = await User.create({
     fullName,
     email: normalizedEmail,
-    password: hashedPassword,
+    password: password,
     role: "admin",
   });
 

@@ -96,6 +96,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 0
     },
 
+    // ================= FOOD PARTNER INFO =================
     openingTime: {
       type: DataTypes.TIME,
       allowNull: true,
@@ -111,6 +112,12 @@ module.exports = (sequelize, DataTypes) => {
   // ================= PASSWORD HASHING =================
   User.beforeCreate(async (user) => {
     user.password = await bcrypt.hash(user.password, 10);
+  });
+
+  User.beforeUpdate(async (user) => {
+    if (user.changed("password")) {
+      user.password = await bcrypt.hash(user.password, 10);
+    }
   });
 
 

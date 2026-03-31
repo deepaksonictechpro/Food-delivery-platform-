@@ -33,8 +33,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 // ====== Serve Uploaded Files ======
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // ====== Test Route ======
 app.get("/", (req, res) => res.send("API running"));

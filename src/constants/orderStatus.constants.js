@@ -1,10 +1,10 @@
 const ORDER_STATUS = {
-  PENDING: "pending",
-  ACCEPTED: "accepted",
-  PICKED_UP: "picked_up",
-  DELIVERED: "delivered",
-  CANCEL_REQUESTED: "cancel_requested",
-  CANCELLED: "cancelled",
+  PENDING: "PENDING",
+  ACCEPTED: "ACCEPTED",
+  PICKED_UP: "PICKED_UP",
+  DELIVERED: "DELIVERED",
+  CANCEL_REQUESTED: "CANCEL_REQUESTED",
+  CANCELLED: "CANCELLED",
 };
 
 module.exports = { ORDER_STATUS };

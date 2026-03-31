@@ -39,7 +39,7 @@ module.exports = (sequelize, DataTypes) => {
     },
 
     referenceId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER.UNSIGNED,
       allowNull: true,
     },
 

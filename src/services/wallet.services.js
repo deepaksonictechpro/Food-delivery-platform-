@@ -89,7 +89,7 @@ const payWithWalletService = async (userId, orderId) => {
 
     if (!order) throw new Error("Order not found");
 
-    if (order.paymentStatus === "paid") {
+    if (order.paymentStatus === "PAID") {
       throw new Error("Order already paid");
     }
 
@@ -103,7 +103,7 @@ const payWithWalletService = async (userId, orderId) => {
     await wallet.save({ transaction: t });
 
     // FIXED
-    order.paymentStatus = "paid";
+    order.paymentStatus = "PAID";
     await order.save({ transaction: t });
 
     await WalletTransaction.create({
@@ -132,7 +132,7 @@ async function refundToWalletService(userId, orderId, t) {
   if (!order) throw new Error("Order not found");
   if (order.userId !== userId) throw new Error("Unauthorized refund");
 
-  if (order.status !== "cancelled") {
+  if (order.status !== "CANCELLED") {
     throw new Error("Refund allowed only for cancelled orders");
   }
 

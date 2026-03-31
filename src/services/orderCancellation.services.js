@@ -1,6 +1,7 @@
 const { DeliveryOrder, User, Food } = require("../models");
 const { sequelize } = require("../config/database");
 const { refundToWalletService } = require("./wallet.services");
+const { ORDER_STATUS } = require("../constants/orderStatus.constants");
 
 //------------------------------- REQUEST CANCEL ORDER --------------------------------------
 
@@ -8,11 +9,11 @@ const requestCancelOrderService = async (userId, orderId, reason) => {
   const order = await DeliveryOrder.findByPk(orderId);
   if (!order) throw new Error("Order not found");
   if (order.userId !== userId) throw new Error("You cannot cancel this order");
-  if (["delivered", "cancelled"].includes(order.status))
+  if ([ORDER_STATUS.DELIVERED, ORDER_STATUS.CANCELLED].includes(order.status))
     throw new Error("Cannot cancel this order");
 
   order.previousStatus = order.status;
-  order.status = "cancel_requested";
+  order.status = ORDER_STATUS.CANCEL_REQUESTED;
   order.cancelReason = reason;
   order.cancelRequestedAt = new Date();
 
@@ -28,7 +29,7 @@ const handleCancelDecisionService = async (adminId, orderId, decision, adminReas
     const order = await DeliveryOrder.findByPk(orderId, { transaction: t });
 
     if (!order) throw new Error("Order not found");
-    if (order.status !== "cancel_requested") {
+    if (order.status !== ORDER_STATUS.CANCEL_REQUESTED) {
       throw new Error("No cancel request found");
     }
 
@@ -39,7 +40,7 @@ const handleCancelDecisionService = async (adminId, orderId, decision, adminReas
     // ---------------- APPROVE ----------------
     if (decision === "approve") {
 
-      order.status = "cancelled";
+      order.status = ORDER_STATUS.CANCELLED;
 
       await order.save({ transaction: t });
 
@@ -69,7 +70,7 @@ const handleCancelDecisionService = async (adminId, orderId, decision, adminReas
 
 const getPendingCancelRequestsService = async () => {
   const orders = await DeliveryOrder.findAll({
-    where: { status: "cancel_requested" },
+    where: { status: ORDER_STATUS.CANCEL_REQUESTED },
     include: [
       { model: User, as: "user", attributes: ["id", "fullName", "email"] },
       { model: Food, as: "food", attributes: ["id", "name", "price"] },

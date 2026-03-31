@@ -2,28 +2,28 @@ module.exports = (sequelize, DataTypes) => {
 
   const DeliveryOrder = sequelize.define("DeliveryOrder", {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER.UNSIGNED,
       primaryKey: true,
+      autoIncrement: true,
     },
 
     foodId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
     },
 
     userId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
     },
 
     deliveryPartnerId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER.UNSIGNED,
       allowNull: true,
     },
 
     addressId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
     },
 
@@ -38,8 +38,8 @@ module.exports = (sequelize, DataTypes) => {
     },
 
     paymentStatus: {
-      type: DataTypes.ENUM("pending", "paid"),
-      defaultValue: "pending",
+      type: DataTypes.ENUM("PENDING", "PAID"),
+      defaultValue: "PENDING",
     },
 
     status: {
@@ -48,7 +48,7 @@ module.exports = (sequelize, DataTypes) => {
     },
 
     totalAmount: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
 
@@ -58,7 +58,7 @@ module.exports = (sequelize, DataTypes) => {
     },
 
     earning: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.DECIMAL(10, 2),
       defaultValue: 0,
     },
 
