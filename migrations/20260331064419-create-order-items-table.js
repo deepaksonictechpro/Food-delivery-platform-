@@ -1,50 +1,36 @@
 'use strict';
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('orders', {
+    await queryInterface.createTable('order_items', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER.UNSIGNED,
       },
-      userId: {
+      orderId: {
         type: Sequelize.INTEGER.UNSIGNED,
         allowNull: false,
-        references: { model: 'Users', key: 'id' },
+        references: { model: 'orders', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
       },
-      deliveryPartnerId: {
-        type: Sequelize.INTEGER.UNSIGNED,
-        allowNull: true,
-        references: { model: 'Users', key: 'id' },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
-      },
-      addressId: {
+      foodId: {
         type: Sequelize.INTEGER.UNSIGNED,
         allowNull: false,
-        references: { model: 'Addresses', key: 'id' },
+        references: { model: 'Foods', key: 'id' },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
       },
-      totalAmount: {
+      quantity: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      price: {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
-      },
-      status: {
-        type: Sequelize.STRING,
-        defaultValue: 'PENDING',
-      },
-      paymentMethod: {
-        type: Sequelize.ENUM('COD', 'ONLINE', 'WALLET'),
-        allowNull: false,
-      },
-      paymentStatus: {
-        type: Sequelize.ENUM('PENDING', 'PAID'),
-        defaultValue: 'PENDING',
       },
       createdAt: {
         allowNull: false,
@@ -58,6 +44,6 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable('orders');
+    await queryInterface.dropTable('order_items');
   }
 };

@@ -1,15 +1,11 @@
 "use strict";
 
 module.exports = {
-  async up(queryInterface, Sequelize) {
-    await queryInterface.addColumn("Foods", "isAvailable", {
-      type: Sequelize.BOOLEAN,
-      allowNull: false,
-      defaultValue: true,
-    });
+  async up() {
+    // Included in baseline foods table.
   },
 
-  async down(queryInterface, Sequelize) {
-    await queryInterface.removeColumn("Foods", "isAvailable");
+  async down() {
+    // No-op rollback.
   },
 };
