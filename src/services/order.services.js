@@ -238,12 +238,26 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, c
 
   if (!order) throw new Error("Order not found");
 
+  // Prevent status skipping
+  if (status === ORDER_STATUS.PICKED_UP && order.status !== ORDER_STATUS.ACCEPTED) {
+    throw new Error("Order must be ACCEPTED before pickup");
+  }
+
+  if (status === ORDER_STATUS.DELIVERED && order.status !== ORDER_STATUS.PICKED_UP) {
+    throw new Error("Order must be PICKED_UP before delivery");
+  }
+
+  // Prevent duplicate delivery
+  if (order.status === ORDER_STATUS.DELIVERED) {
+    throw new Error("Order already delivered");
+  }
+
   // Update cashCollected if provided
   if (cashCollected !== null) {
     order.cashCollected = !!cashCollected;
   }
 
-  // PICKUP CHECK
+  // PICKUP VALIDATION
   if (
     status === ORDER_STATUS.PICKED_UP &&
     order.paymentMethod !== "COD" &&
@@ -252,10 +266,10 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, c
     throw new Error("Cannot pickup unpaid order");
   }
 
-  // DELIVERY CHECK
+  // DELIVERY LOGIC 
   if (status === ORDER_STATUS.DELIVERED) {
 
-    // ONLINE PAYMENT FIX
+    //  ONLINE PAYMENT CHECK
     if (order.paymentMethod !== "COD") {
 
       if (order.paymentStatus !== "PAID") {
@@ -269,25 +283,28 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, c
           }
         });
 
-        if (paymentTx) {
-          order.paymentStatus = "PAID";
-          // We will save later below
-        } else {
+        if (!paymentTx) {
           throw new Error("Online payment not completed");
         }
+
+        order.paymentStatus = "PAID";
       }
     }
 
     // COD CHECK
-    if (
-      order.paymentMethod === "COD" &&
-      !order.cashCollected
-    ) {
+    if (order.paymentMethod === "COD" && !order.cashCollected) {
       throw new Error("Cash not collected yet");
     }
 
+    // Prevent double earning
+    if (order.earning && parseFloat(order.earning) > 0) {
+      throw new Error("Earning already processed for this order");
+    }
+
+    // SET earning
     order.earning = PER_DELIVERY_EARNING;
 
+    // Update partner stats
     await User.increment(
       {
         earnings: PER_DELIVERY_EARNING,
@@ -298,9 +315,11 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, c
       }
     );
 
+    // Add wallet earning (safe)
     await addEarningToWallet(deliveryPartnerId, order.id);
   }
 
+  //  FINAL STATUS UPDATE
   order.status = status;
   await order.save();
 

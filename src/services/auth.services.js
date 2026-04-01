@@ -185,21 +185,42 @@ async function verifyForgotPasswordOtpService(email, otp) {
 //------------------------------- RESET PASSWORD --------------------------------------
 
 async function resetPasswordService(email, newPassword) {
-  if (!email || !newPassword) throw new Error("Email and new password are required");
+  if (!email || !newPassword) {
+    throw new Error("Email and new password are required");
+  }
 
   const normalizedEmail = normalizeEmail(email);
 
   const user = await User.findOne({ where: { email: normalizedEmail } });
   if (!user) throw new Error("User not found");
 
-  if (!user.isOtpVerified) throw new Error("Please verify OTP first");
+  // Ensure OTP exists
+  if (!user.otp) {
+    throw new Error("OTP not found or expired");
+  }
 
-  user.password = newPassword;
-  user.otp = null;
-  user.otpExpiresAt = null;
-  user.otpAttempts = 0;
+  // Ensure OTP verified
+  if (!user.isOtpVerified) {
+    throw new Error("Please verify OTP first");
+  }
 
-  await user.save();
+  // Check expiry
+  if (user.otpExpiresAt && new Date() > user.otpExpiresAt) {
+    throw new Error("OTP expired");
+  }
+
+  // HASH PASSWORD (VERY IMPORTANT)
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await user.update({
+    password: hashedPassword,
+
+    // CLEAR EVERYTHING
+    otp: null,
+    otpExpiresAt: null,
+    otpAttempts: 0,
+    isOtpVerified: false,
+  });
 
   return { message: "Password reset successfully" };
 }
@@ -251,7 +272,13 @@ async function updateUserProfile(userId, data) {
     throw new Error("User not found");
   }
 
-  await user.update(data);
+  const updates = {};
+
+  if (data.fullName !== undefined) updates.fullName = data.fullName;
+  if (data.phoneNumber !== undefined) updates.phoneNumber = data.phoneNumber;
+  if (data.profileImage !== undefined) updates.profileImage = data.profileImage;
+
+  await user.update(updates);
 
   return user;
 }

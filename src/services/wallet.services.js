@@ -1,6 +1,6 @@
 const { Wallet, WalletTransaction, Order } = require("../models");
 const { getPagination, getPagingData } = require("../utils/pagination.utility");
-const {sequelize} = require("../config/database"); // adjust path if needed
+const { sequelize } = require("../config/database");
 
 // ------------------------- Get Wallet ----------------------------
 
@@ -10,7 +10,6 @@ async function getWalletService(userId) {
     attributes: ["id", "balance", "status"],
   });
 
-  // Auto create wallet
   if (!wallet) {
     wallet = await Wallet.create({
       userId,
@@ -21,16 +20,14 @@ async function getWalletService(userId) {
   return wallet;
 }
 
-// -----------------------Get Transactions-------------------------------
+// ----------------------- Get Transactions -------------------------------
 
 async function getWalletTransactionsService({ userId, page, limit }) {
   const { limit: pageSize, offset } = getPagination(page, limit);
 
   const wallet = await Wallet.findOne({ where: { userId } });
 
-  if (!wallet) {
-    throw new Error("Wallet not found");
-  }
+  if (!wallet) throw new Error("Wallet not found");
 
   const data = await WalletTransaction.findAndCountAll({
     where: { walletId: wallet.id },
@@ -46,7 +43,6 @@ async function getWalletTransactionsService({ userId, page, limit }) {
 
 async function addMoneyService(userId, amount) {
   return await sequelize.transaction(async (t) => {
-    // Find or create wallet
     let wallet = await Wallet.findOne({ where: { userId }, transaction: t });
 
     if (!wallet) {
@@ -55,11 +51,11 @@ async function addMoneyService(userId, amount) {
         { transaction: t }
       );
     }
-    //  Update balance
+
     const newBalance = parseFloat(wallet.balance) + parseFloat(amount);
+
     await wallet.update({ balance: newBalance }, { transaction: t });
 
-    // Create transaction
     await WalletTransaction.create(
       {
         walletId: wallet.id,
@@ -73,13 +69,11 @@ async function addMoneyService(userId, amount) {
       { transaction: t }
     );
 
-    return {
-      balance: newBalance,
-    };
+    return { balance: newBalance };
   });
 }
 
-//------------------------- Pay With Wallet -------------------------
+// ------------------------- Pay With Wallet (FIXED) -------------------------
 
 const payWithWalletService = async (userId, orderId) => {
   const t = await sequelize.transaction();
@@ -89,8 +83,23 @@ const payWithWalletService = async (userId, orderId) => {
 
     if (!order) throw new Error("Order not found");
 
+    // SECURITY FIX
+    if (order.userId !== userId) {
+      throw new Error("Unauthorized: You cannot pay for this order");
+    }
+
     if (order.paymentStatus === "PAID") {
       throw new Error("Order already paid");
+    }
+
+    // Prevent cancelled orders
+    if (order.status === "CANCELLED") {
+      throw new Error("Cannot pay for cancelled order");
+    }
+
+    // Only wallet payment allowed
+    if (order.paymentMethod !== "WALLET") {
+      throw new Error("Invalid payment method for wallet payment");
     }
 
     const wallet = await Wallet.findOne({ where: { userId }, transaction: t });
@@ -99,44 +108,59 @@ const payWithWalletService = async (userId, orderId) => {
       throw new Error("Insufficient wallet balance");
     }
 
-    wallet.balance = parseFloat(wallet.balance) - parseFloat(order.totalAmount);
+    // Deduct balance
+    wallet.balance =
+      parseFloat(wallet.balance) - parseFloat(order.totalAmount);
     await wallet.save({ transaction: t });
 
-    // FIXED
+    // Mark order paid
     order.paymentStatus = "PAID";
     await order.save({ transaction: t });
 
-    await WalletTransaction.create({
-      walletId: wallet.id,
-      userId,
-      type: "debit",
-      amount: order.totalAmount,
-      transactionType: "order_payment",
-      referenceId: order.id,
-      balanceAfterTransaction: wallet.balance,
-      status: "success",
-    }, { transaction: t });
+    // Create transaction
+    await WalletTransaction.create(
+      {
+        walletId: wallet.id,
+        userId,
+        type: "debit",
+        amount: order.totalAmount,
+        transactionType: "order_payment",
+        referenceId: order.id,
+        balanceAfterTransaction: wallet.balance,
+        status: "success",
+      },
+      { transaction: t }
+    );
 
     await t.commit();
     return order;
-
   } catch (err) {
     await t.rollback();
     throw err;
   }
 };
 
-// ----------------------- Refund to Wallet (ALL PAYMENT METHODS) -------------------------
+// ----------------------- Refund to Wallet (FIXED) -------------------------
 
 async function refundToWalletService(userId, orderId, t) {
-
   const order = await Order.findByPk(orderId, { transaction: t });
 
   if (!order) throw new Error("Order not found");
-  if (order.userId !== userId) throw new Error("Unauthorized refund");
+
+  if (order.userId !== userId) {
+    throw new Error("Unauthorized refund");
+  }
 
   if (order.status !== "CANCELLED") {
     throw new Error("Refund allowed only for cancelled orders");
+  }
+
+  if (order.paymentStatus !== "PAID") {
+    throw new Error("Refund not allowed for unpaid orders");
+  }
+
+  if (order.paymentMethod === "COD") {
+    throw new Error("Refund not allowed for COD orders");
   }
 
   const existingRefund = await WalletTransaction.findOne({
@@ -153,9 +177,6 @@ async function refundToWalletService(userId, orderId, t) {
   }
 
   const amount = parseFloat(order.totalAmount);
-  if (!amount || amount <= 0) {
-    throw new Error("Invalid refund amount");
-  }
 
   let wallet = await Wallet.findOne({
     where: { userId },
@@ -192,7 +213,6 @@ async function refundToWalletService(userId, orderId, t) {
     balance: newBalance,
   };
 }
-
 
 module.exports = {
   getWalletService,

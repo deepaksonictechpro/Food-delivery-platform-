@@ -21,6 +21,7 @@ const deliveryPartnerRoutes = require("./routes/delivery_partner.routes");
 const reviewRoutes = require("./routes/review.routes");
 const foodPartnerReviewRoutes = require("./routes/foodPartnerReview.routes");
 const walletRoutes = require("./routes/wallet.routes");
+const deliveryWalletRoutes = require("./routes/deliveryPartnerWallet.routes");
 
 const app = express();
 
@@ -52,7 +53,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/review", reviewRoutes);
 app.use("/api/foodpartner-reviews", foodPartnerReviewRoutes);
 app.use("/api/wallet", walletRoutes);
-
+app.use("/api/delivery-partner-wallet", deliveryWalletRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
