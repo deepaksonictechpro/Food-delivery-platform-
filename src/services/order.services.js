@@ -182,26 +182,30 @@ async function getAvailableOrdersService({
 async function acceptOrderService(orderId, deliveryPartnerId) {
   await checkDeliveryPartnerProfile(deliveryPartnerId);
 
-  const order = await Order.findOne({
-    where: {
-      id: orderId,
-      status: ORDER_STATUS.PENDING,
-      deliveryPartnerId: null,
-    },
-    include: [
-      { model: User, as: "user", attributes: ["id", "fullName"] },
-      { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
-    ],
+  return await sequelize.transaction(async (transaction) => {
+    const order = await Order.findOne({
+      where: { id: orderId },
+      include: [
+        { model: User, as: "user", attributes: ["id", "fullName"] },
+        { model: Address, as: "addressInfo" },
+        { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
+      ],
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+
+    if (!order) throw new Error("Order not found");
+    if (order.status !== ORDER_STATUS.PENDING || order.deliveryPartnerId) {
+      throw new Error("Order not found or already assigned");
+    }
+
+    order.deliveryPartnerId = deliveryPartnerId;
+    order.status = ORDER_STATUS.ACCEPTED;
+
+    await order.save({ transaction });
+
+    return cleanOrderResponse(order, { id: deliveryPartnerId, role: "delivery_partner" });
   });
-
-  if (!order) throw new Error("Order not found or already assigned");
-
-  order.deliveryPartnerId = deliveryPartnerId;
-  order.status = ORDER_STATUS.ACCEPTED;
-
-  await order.save();
-
-  return cleanOrderResponse(order, { id: deliveryPartnerId, role: "delivery_partner" });
 }
 
 //------------------------------- GET ASSIGNED DELIVERIES SERVICE --------------------------------------
@@ -223,64 +227,64 @@ async function getAssignedDeliveriesService(deliveryPartnerId, currentUser = {})
 // ------------------------------- UPDATE DELIVERY STATUS SERVICE --------------------------------------
 
 async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, cashCollected = null) {
+  return await sequelize.transaction(async (t) => {
 
-  if (![ORDER_STATUS.PICKED_UP, ORDER_STATUS.DELIVERED].includes(status)) {
-    throw new Error("Invalid status");
-  }
+    if (![ORDER_STATUS.PICKED_UP, ORDER_STATUS.DELIVERED].includes(status)) {
+      throw new Error("Invalid status");
+    }
 
-  const order = await Order.findOne({
-    where: { id: orderId, deliveryPartnerId },
-    include: [
-      { model: User, as: "user", attributes: ["id", "fullName"] },
-      { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
-    ],
-  });
+    const order = await Order.findOne({
+      where: { id: orderId, deliveryPartnerId },
+      include: [
+        { model: User, as: "user", attributes: ["id", "fullName"] },
+        { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
+      ],
+      transaction: t,
+      lock: t.LOCK.UPDATE, // prevents race condition
+    });
 
-  if (!order) throw new Error("Order not found");
+    if (!order) throw new Error("Order not found");
 
-  // Prevent status skipping
-  if (status === ORDER_STATUS.PICKED_UP && order.status !== ORDER_STATUS.ACCEPTED) {
-    throw new Error("Order must be ACCEPTED before pickup");
-  }
+    // Already delivered protection
+    if (order.status === ORDER_STATUS.DELIVERED) {
+      throw new Error("Order already delivered");
+    }
 
-  if (status === ORDER_STATUS.DELIVERED && order.status !== ORDER_STATUS.PICKED_UP) {
-    throw new Error("Order must be PICKED_UP before delivery");
-  }
+    // FLOW ENFORCEMENT
+    if (status === ORDER_STATUS.PICKED_UP && order.status !== ORDER_STATUS.ACCEPTED) {
+      throw new Error("Order must be ACCEPTED before pickup");
+    }
 
-  // Prevent duplicate delivery
-  if (order.status === ORDER_STATUS.DELIVERED) {
-    throw new Error("Order already delivered");
-  }
+    if (status === ORDER_STATUS.DELIVERED && order.status !== ORDER_STATUS.PICKED_UP) {
+      throw new Error("Order must be PICKED_UP before delivery");
+    }
 
-  // Update cashCollected if provided
-  if (cashCollected !== null) {
-    order.cashCollected = !!cashCollected;
-  }
+    // Update COD flag
+    if (cashCollected !== null) {
+      order.cashCollected = !!cashCollected;
+    }
 
-  // PICKUP VALIDATION
-  if (
-    status === ORDER_STATUS.PICKED_UP &&
-    order.paymentMethod !== "COD" &&
-    order.paymentStatus !== "PAID"
-  ) {
-    throw new Error("Cannot pickup unpaid order");
-  }
+    //Pickup validation
+    if (
+      status === ORDER_STATUS.PICKED_UP &&
+      order.paymentMethod !== "COD" &&
+      order.paymentStatus !== "PAID"
+    ) {
+      throw new Error("Cannot pickup unpaid order");
+    }
 
-  // DELIVERY LOGIC 
-  if (status === ORDER_STATUS.DELIVERED) {
+    // DELIVERY LOGIC
+    if (status === ORDER_STATUS.DELIVERED) {
 
-    //  ONLINE PAYMENT CHECK
-    if (order.paymentMethod !== "COD") {
-
-      if (order.paymentStatus !== "PAID") {
-
+      if (order.paymentMethod === "WALLET") {
         const paymentTx = await WalletTransaction.findOne({
           where: {
             userId: order.userId,
             referenceId: order.id,
             transactionType: "order_payment",
             status: "success"
-          }
+          },
+          transaction: t
         });
 
         if (!paymentTx) {
@@ -289,49 +293,49 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, c
 
         order.paymentStatus = "PAID";
       }
-    }
 
-    // COD CHECK
-    if (order.paymentMethod === "COD" && !order.cashCollected) {
-      throw new Error("Cash not collected yet");
-    }
-
-    // Prevent double earning
-    if (order.earning && parseFloat(order.earning) > 0) {
-      throw new Error("Earning already processed for this order");
-    }
-
-    // SET earning
-    order.earning = PER_DELIVERY_EARNING;
-
-    // Update partner stats
-    await User.increment(
-      {
-        earnings: PER_DELIVERY_EARNING,
-        totalDeliveries: 1,
-      },
-      {
-        where: { id: deliveryPartnerId },
+      if (order.paymentMethod === "COD" && !order.cashCollected) {
+        throw new Error("Cash not collected yet");
       }
-    );
 
-    // Add wallet earning (safe)
-    await addEarningToWallet(deliveryPartnerId, order.id);
-  }
+      if (parseFloat(order.earning || 0) > 0) {
+        throw new Error("Earning already processed for this order");
+      }
 
-  //  FINAL STATUS UPDATE
-  order.status = status;
-  await order.save();
+      // SET earning
+      order.earning = PER_DELIVERY_EARNING;
 
-  const updatedOrder = await Order.findByPk(orderId, {
-    include: [
-      { model: User, as: "user", attributes: ["id", "fullName"] },
-      { model: Address, as: "addressInfo" },
-      { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
-    ],
+      // Update stats
+      await User.increment(
+        {
+          earnings: PER_DELIVERY_EARNING,
+          totalDeliveries: 1,
+        },
+        {
+          where: { id: deliveryPartnerId },
+          transaction: t
+        }
+      );
+
+      //  Wallet earning (SAFE)
+      await addEarningToWallet(deliveryPartnerId, order.id, t);
+    }
+
+    // FINAL STATUS
+    order.status = status;
+    await order.save({ transaction: t });
+
+    const updatedOrder = await Order.findByPk(orderId, {
+      include: [
+        { model: User, as: "user", attributes: ["id", "fullName"] },
+        { model: Address, as: "addressInfo" },
+        { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
+      ],
+      transaction: t,
+    });
+
+    return cleanOrderResponse(updatedOrder, { id: deliveryPartnerId, role: "delivery_partner" });
   });
-
-  return cleanOrderResponse(updatedOrder, { id: deliveryPartnerId, role: "delivery_partner" });
 }
 // ------------------------------- DELIVERY PARTNER PROFILE CHECK --------------------------------------
 

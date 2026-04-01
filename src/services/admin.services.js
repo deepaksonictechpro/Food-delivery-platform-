@@ -1,5 +1,5 @@
 const { User, Food } = require("../models");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
 //------------------------------- CREATE ADMIN (ONE TIME ONLY)--------------------------------------
@@ -27,7 +27,7 @@ async function createAdminService({ fullName, email, password }) {
   });
 
   const token = jwt.sign(
-    { id: admin.id, role: admin.role },
+    { id: admin.id, role: admin.role, tokenVersion: admin.tokenVersion ?? 0 },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
@@ -43,15 +43,14 @@ async function createAdminService({ fullName, email, password }) {
   };
 }
 
-
-
 //--------------------------------------- Get all users ---------------------------------------------
 
 async function fetchAllUsers({ page = 1, limit = 10, sortBy = "createdAt", order = "DESC" }) {
   const offset = (page - 1) * limit;
 
   const { count, rows } = await User.findAndCountAll({
-    attributes: { exclude: ["password"] },
+    where: { role: "user" }, // ONLY users
+    attributes: ["id", "fullName", "email", "phoneNumber", "status", "createdAt", "updatedAt"],
     order: [[sortBy, order.toUpperCase()]],
     limit,
     offset,
@@ -62,6 +61,71 @@ async function fetchAllUsers({ page = 1, limit = 10, sortBy = "createdAt", order
     totalPages: Math.ceil(count / limit),
     currentPage: page,
     users: rows,
+  };
+}
+
+//--------------------------------------- Get all delivery partners ----------------------------------
+
+async function fetchAllDeliveryPartners({ page = 1, limit = 10, sortBy = "createdAt", order = "DESC" }) {
+  const offset = (page - 1) * limit;
+
+  const { count, rows } = await User.findAndCountAll({
+    where: { role: "delivery_partner" },
+    attributes: [
+      "id",
+      "fullName",
+      "email",
+      "phoneNumber",
+      "vehicleType",
+      "vehicleNumber",
+      "drivingLicenseNumber",
+      "totalDeliveries",
+      "earnings",
+      "status",
+      "createdAt",
+      "updatedAt",
+    ],
+    order: [[sortBy, order.toUpperCase()]],
+    limit,
+    offset,
+  });
+
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    partners: rows,
+  };
+}
+
+//--------------------------------------- Get all food partners --------------------------------------
+
+async function fetchAllFoodPartners({ page = 1, limit = 10, sortBy = "createdAt", order = "DESC" }) {
+  const offset = (page - 1) * limit;
+
+  const { count, rows } = await User.findAndCountAll({
+    where: { role: "food_partner" },
+    attributes: [
+      "id",
+      "fullName",
+      "email",
+      "phoneNumber",
+      "openingTime",
+      "closingTime",
+      "status",
+      "createdAt",
+      "updatedAt",
+    ],
+    order: [[sortBy, order.toUpperCase()]],
+    limit,
+    offset,
+  });
+
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    partners: rows,
   };
 }
 
@@ -84,51 +148,7 @@ async function fetchAllFoods({ page = 1, limit = 10, sortBy = "createdAt", order
   };
 }
 
-
-//--------------------------------------- Get all food partner---------------------------------------
-
-async function fetchAllFoodPartners({ page = 1, limit = 10, sortBy = "createdAt", order = "DESC" }) {
-  const offset = (page - 1) * limit;
-
-  const { count, rows } = await User.findAndCountAll({
-    where: { role: "food_partner" },
-    attributes: { exclude: ["password"] },
-    order: [[sortBy, order.toUpperCase()]],
-    limit,
-    offset,
-  });
-
-  return {
-    totalItems: count,
-    totalPages: Math.ceil(count / limit),
-    currentPage: page,
-    partners: rows,
-  };
-}
-
-
-//--------------------------------------- Get all delivery partners ----------------------------------
-
-async function fetchAllDeliveryPartners({ page = 1, limit = 10, sortBy = "createdAt", order = "DESC" }) {
-  const offset = (page - 1) * limit;
-
-  const { count, rows } = await User.findAndCountAll({
-    where: { role: "delivery_partner" },
-    attributes: { exclude: ["password"] },
-    order: [[sortBy, order.toUpperCase()]],
-    limit,
-    offset,
-  });
-
-  return {
-    totalItems: count,
-    totalPages: Math.ceil(count / limit),
-    currentPage: page,
-    partners: rows,
-  };
-}
-
-//--------------------------------------- Get admin profile --------------------------------------------
+//--------------------------------------- Get admin profile ------------------------------------------
 
 async function fetchAdminProfile(adminId) {
   const admin = await User.findOne({
@@ -140,7 +160,7 @@ async function fetchAdminProfile(adminId) {
   return admin;
 }
 
-//--------------------------------------- Update admin profile ------------------------------------------
+//--------------------------------------- Update admin profile ---------------------------------------
 
 async function updateAdminProfile(adminId, data) {
   const admin = await User.findOne({ where: { id: adminId, role: "admin" } });
@@ -163,13 +183,12 @@ async function updateAdminProfile(adminId, data) {
   };
 }
 
-
 module.exports = {
+  createAdminService,
   fetchAllUsers,
-  fetchAllFoods,
-  fetchAllFoodPartners,
   fetchAllDeliveryPartners,
+  fetchAllFoodPartners,
+  fetchAllFoods,
   fetchAdminProfile,
   updateAdminProfile,
-  createAdminService,
 };

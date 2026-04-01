@@ -73,7 +73,7 @@ router.post(
 );
 
 // ---------------- LOGOUT ----------------
-router.post("/logout", authController.logoutUser);
+router.post("/logout", authUserMiddleware, authController.logoutUser);
 
 // ---------------- GET USER PROFILE ----------------
 router.get(

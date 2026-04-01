@@ -39,11 +39,18 @@ async function getWalletTransactionsService({ userId, page, limit }) {
   return getPagingData(data, page, limit);
 }
 
-// ----------------------- Add Money -------------------------
+// ----------------------- Add Money (SECURE FIX) -------------------------
 
 async function addMoneyService(userId, amount) {
+  if (!amount || isNaN(amount) || Number(amount) <= 0) {
+    throw new Error("Invalid amount");
+  }
+
   return await sequelize.transaction(async (t) => {
-    let wallet = await Wallet.findOne({ where: { userId }, transaction: t });
+    let wallet = await Wallet.findOne({
+      where: { userId },
+      transaction: t,
+    });
 
     if (!wallet) {
       wallet = await Wallet.create(
@@ -52,9 +59,13 @@ async function addMoneyService(userId, amount) {
       );
     }
 
-    const newBalance = parseFloat(wallet.balance) + parseFloat(amount);
+    const newBalance =
+      parseFloat(wallet.balance) + parseFloat(amount);
 
-    await wallet.update({ balance: newBalance }, { transaction: t });
+    await wallet.update(
+      { balance: newBalance },
+      { transaction: t }
+    );
 
     await WalletTransaction.create(
       {
@@ -62,28 +73,31 @@ async function addMoneyService(userId, amount) {
         userId,
         type: "credit",
         amount,
-        transactionType: "add_money",
+        transactionType: "test_topup",
         balanceAfterTransaction: newBalance,
         status: "success",
       },
       { transaction: t }
     );
 
-    return { balance: newBalance };
+    return {
+      success: true,
+      message: "Money added to wallet (TEST MODE)",
+      balance: newBalance,
+    };
   });
 }
-
-// ------------------------- Pay With Wallet (FIXED) -------------------------
+// ------------------------- Pay With Wallet (FIXED + LOCK) -------------------------
 
 const payWithWalletService = async (userId, orderId) => {
-  const t = await sequelize.transaction();
-
-  try {
-    const order = await Order.findByPk(orderId, { transaction: t });
+  return await sequelize.transaction(async (t) => {
+    const order = await Order.findByPk(orderId, {
+      transaction: t,
+      lock: t.LOCK.UPDATE, 
+    });
 
     if (!order) throw new Error("Order not found");
 
-    // SECURITY FIX
     if (order.userId !== userId) {
       throw new Error("Unauthorized: You cannot pay for this order");
     }
@@ -92,32 +106,36 @@ const payWithWalletService = async (userId, orderId) => {
       throw new Error("Order already paid");
     }
 
-    // Prevent cancelled orders
     if (order.status === "CANCELLED") {
       throw new Error("Cannot pay for cancelled order");
     }
 
-    // Only wallet payment allowed
     if (order.paymentMethod !== "WALLET") {
       throw new Error("Invalid payment method for wallet payment");
     }
 
-    const wallet = await Wallet.findOne({ where: { userId }, transaction: t });
+    const wallet = await Wallet.findOne({
+      where: { userId },
+      transaction: t,
+      lock: t.LOCK.UPDATE, //  lock wallet
+    });
 
     if (!wallet || parseFloat(wallet.balance) < parseFloat(order.totalAmount)) {
       throw new Error("Insufficient wallet balance");
     }
 
-    // Deduct balance
-    wallet.balance =
+    const newBalance =
       parseFloat(wallet.balance) - parseFloat(order.totalAmount);
-    await wallet.save({ transaction: t });
 
-    // Mark order paid
-    order.paymentStatus = "PAID";
-    await order.save({ transaction: t });
+    await wallet.update({ balance: newBalance }, { transaction: t });
 
-    // Create transaction
+    await order.update(
+      {
+        paymentStatus: "PAID",
+      },
+      { transaction: t }
+    );
+
     await WalletTransaction.create(
       {
         walletId: wallet.id,
@@ -126,24 +144,23 @@ const payWithWalletService = async (userId, orderId) => {
         amount: order.totalAmount,
         transactionType: "order_payment",
         referenceId: order.id,
-        balanceAfterTransaction: wallet.balance,
+        balanceAfterTransaction: newBalance,
         status: "success",
       },
       { transaction: t }
     );
 
-    await t.commit();
     return order;
-  } catch (err) {
-    await t.rollback();
-    throw err;
-  }
+  });
 };
 
-// ----------------------- Refund to Wallet (FIXED) -------------------------
+// ----------------------- Refund to Wallet (FIXED + SAFE) -------------------------
 
 async function refundToWalletService(userId, orderId, t) {
-  const order = await Order.findByPk(orderId, { transaction: t });
+  const order = await Order.findByPk(orderId, {
+    transaction: t,
+    lock: t.LOCK.UPDATE, // prevent duplicate refund
+  });
 
   if (!order) throw new Error("Order not found");
 
@@ -181,6 +198,7 @@ async function refundToWalletService(userId, orderId, t) {
   let wallet = await Wallet.findOne({
     where: { userId },
     transaction: t,
+    lock: t.LOCK.UPDATE,
   });
 
   if (!wallet) {

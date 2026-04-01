@@ -48,7 +48,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/cancel-orders", ordercancelRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/address", addressRoutes);
-app.use("/api/Delivery-partner", deliveryPartnerRoutes);
+app.use("/api/delivery-partner", deliveryPartnerRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/review", reviewRoutes);
 app.use("/api/foodpartner-reviews", foodPartnerReviewRoutes);

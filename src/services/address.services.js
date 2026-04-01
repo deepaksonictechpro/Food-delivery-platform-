@@ -42,6 +42,7 @@ async function updateAddressService(userId, addressId, data, file) {
     if (data.city !== undefined) address.city = data.city;
     if (data.state !== undefined) address.state = data.state;
     if (data.zipCode !== undefined) address.zipCode = data.zipCode;
+    if (data.country !== undefined) address.country = data.country;
 
     if (data.phoneNumber !== undefined) {
       if (!data.phoneNumber.trim()) {

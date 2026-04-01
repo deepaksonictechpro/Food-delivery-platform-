@@ -10,7 +10,7 @@ const { createAdminSchema, updateAdminProfileSchema } = require("../validations/
 
 // router.post(
 //   "/create-admin",
-//   authAdminMiddleware, 
+//   authAdminMiddleware,
 //   validate(createAdminSchema),
 //   adminController.createAdmin
 // );
@@ -21,8 +21,6 @@ router.get("/foods", authAdminMiddleware, adminController.getAllFoods);
 router.get("/partners/food", authAdminMiddleware, adminController.getAllFoodPartners);
 router.get("/partners/delivery", authAdminMiddleware, adminController.getAllDeliveryPartners);
 
-// ===== Admin Profile =====
-router.get("/profile", authAdminMiddleware, adminController.getAdminProfile);
 
 router.put(
   "/profile",

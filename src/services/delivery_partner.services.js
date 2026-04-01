@@ -3,75 +3,78 @@ const { User } = require("../models");
 
 // ================= GET DELIVERY PARTNER PROFILE =================
 
-async function getDeliveryPartnerProfile(partnerId) {
-  const partner = await User.findOne({
-    where: {
-      id: partnerId,
-      role: "delivery_partner",
-    },
-    attributes: [
-      "id",
-      "fullName",
-      "email",
-      "phoneNumber",
-      "profileImage",
-      "status",
-      "vehicleType",
-      "vehicleNumber",
-      "drivingLicenseNumber",
-      "totalDeliveries",
-      "earnings"
-    ],
-  });
+async function getDeliveryPartnerProfile(userId) {
+  const user = await User.findByPk(userId);
 
-  if (!partner) {
+  if (!user || user.role !== "delivery_partner") {
     throw new Error("Delivery partner not found");
   }
 
-  return partner;
+  return {
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    profileImage: user.profileImage,
+    role: user.role,
+
+    vehicleType: user.vehicleType,
+    vehicleNumber: user.vehicleNumber,
+    drivingLicenseNumber: user.drivingLicenseNumber,
+    totalDeliveries: user.totalDeliveries,
+    earnings: user.earnings,
+
+    status: user.status,
+    isOtpVerified: user.isOtpVerified,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
 }
 
 
 // ================= UPDATE DELIVERY PARTNER PROFILE =================
 
-async function updateDeliveryPartnerProfile(partnerId, data) {
+async function updateDeliveryPartnerProfile(userId, data) {
+  const user = await User.findByPk(userId);
 
-  const partner = await User.findOne({
-    where: {
-      id: partnerId,
-      role: "delivery_partner"
-    }
-  });
-
-  if (!partner) {
+  if (!user || user.role !== "delivery_partner") {
     throw new Error("Delivery partner not found");
   }
 
-  await partner.update({
-    fullName: data.fullName || partner.fullName,
-    phoneNumber: data.phoneNumber || partner.phoneNumber,
-    profileImage: data.profileImage || partner.profileImage,
-    vehicleType: data.vehicleType || partner.vehicleType,
-    vehicleNumber: data.vehicleNumber || partner.vehicleNumber,
-    drivingLicenseNumber: data.drivingLicenseNumber || partner.drivingLicenseNumber,
-    totalDeliveries: data.totalDeliveries || partner.totalDeliveries,
-    earnings: data.earnings || partner.earnings
-  });
+  const updates = {};
+
+  if (data.fullName !== undefined) updates.fullName = data.fullName;
+  if (data.phoneNumber !== undefined) updates.phoneNumber = data.phoneNumber;
+  if (data.profileImage !== undefined) updates.profileImage = data.profileImage;
+
+  if (data.vehicleType !== undefined) updates.vehicleType = data.vehicleType;
+  if (data.vehicleNumber !== undefined) updates.vehicleNumber = data.vehicleNumber;
+  if (data.drivingLicenseNumber !== undefined)
+    updates.drivingLicenseNumber = data.drivingLicenseNumber;
+
+  await user.update(updates);
 
   return {
-    id: partner.id,
-    fullName: partner.fullName,
-    email: partner.email,
-    phoneNumber: partner.phoneNumber,
-    profileImage: partner.profileImage,
-    status: partner.status,
-    vehicleType: partner.vehicleType,
-    vehicleNumber: partner.vehicleNumber,
-    drivingLicenseNumber: partner.drivingLicenseNumber,
-    totalDeliveries: partner.totalDeliveries,
-    earnings: partner.earnings
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    profileImage: user.profileImage,
+    role: user.role,
+
+    vehicleType: user.vehicleType,
+    vehicleNumber: user.vehicleNumber,
+    drivingLicenseNumber: user.drivingLicenseNumber,
+    totalDeliveries: user.totalDeliveries,
+    earnings: user.earnings,
+
+    status: user.status,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   };
 }
+
+
 module.exports = {
   getDeliveryPartnerProfile,
   updateDeliveryPartnerProfile

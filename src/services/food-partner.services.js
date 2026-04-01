@@ -1,6 +1,7 @@
 const { Order, OrderItem, Food, User } = require("../models");
 
-// ===== Food Partner =====
+// -------------------------- FETCH FOOD PARTNER BY ID -------------------------
+
 async function fetchFoodPartnerById(id) {
   const fp = await User.findOne({
     where: { id, role: "food_partner" },
@@ -16,6 +17,7 @@ async function fetchFoodPartnerById(id) {
   return { ...fp.toJSON(), foods };
 }
 
+// -------------------------- Get Food Order service -------------------------
 async function getFoodOrdersService(foodPartnerId) {
   const orders = await Order.findAll({
     include: [
@@ -40,34 +42,66 @@ async function getFoodOrdersService(foodPartnerId) {
   return orders;
 }
 
-// ===== Profile =====
-async function fetchFoodPartnerProfile(foodPartnerId) {
-  const partner = await User.findOne({
-    where: { id: foodPartnerId, role: "food_partner" },
-    attributes: ["id", "fullName", "email", "role", "profileImage", "status"]
-  });
-  if (!partner) throw new Error("Food Partner not found");
-  return partner;
-}
+// -------------------------- GET FOOD PARTNER PROFILE -------------------------
 
-async function updateFoodPartnerProfile(foodPartnerId, data) {
-  const partner = await User.findOne({ where: { id: foodPartnerId, role: "food_partner" } });
-  if (!partner) throw new Error("Food Partner not found");
+async function fetchFoodPartnerProfile(userId) {
+  const user = await User.findByPk(userId);
 
-  await partner.update({
-    fullName: data.fullName || partner.fullName,
-    email: data.email || partner.email,
-    profileImage: data.profileImage || partner.profileImage,
-    status: data.status || partner.status
-  });
+  if (!user || user.role !== "food_partner") {
+    throw new Error("Food partner not found");
+  }
 
   return {
-    id: partner.id,
-    fullName: partner.fullName,
-    email: partner.email,
-    role: partner.role,
-    profileImage: partner.profileImage,
-    status: partner.status
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    profileImage: user.profileImage,
+    role: user.role,
+
+    openingTime: user.openingTime,
+    closingTime: user.closingTime,
+
+    status: user.status,
+    isOtpVerified: user.isOtpVerified,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+}
+
+// ------------------------- UPDATE FOOD PARTNER PROFILE -------------------------
+async function updateFoodPartnerProfile(userId, data) {
+  const user = await User.findByPk(userId);
+
+  if (!user || user.role !== "food_partner") {
+    throw new Error("Food partner not found");
+  }
+
+  const updates = {};
+
+  if (data.fullName !== undefined) updates.fullName = data.fullName;
+  if (data.phoneNumber !== undefined) updates.phoneNumber = data.phoneNumber;
+  if (data.profileImage !== undefined) updates.profileImage = data.profileImage;
+
+  if (data.openingTime !== undefined) updates.openingTime = data.openingTime;
+  if (data.closingTime !== undefined) updates.closingTime = data.closingTime;
+
+  await user.update(updates);
+
+  return {
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    profileImage: user.profileImage,
+    role: user.role,
+
+    openingTime: user.openingTime,
+    closingTime: user.closingTime,
+
+    status: user.status,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   };
 }
 

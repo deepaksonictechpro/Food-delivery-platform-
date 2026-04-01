@@ -10,4 +10,11 @@ const foodPartnerIdParamSchema = Joi.object({
   }),
 });
 
-module.exports = { foodPartnerIdParamSchema };
+const updateFoodPartnerProfileSchema = Joi.object({
+  fullName: Joi.string().min(3).max(50).trim().optional(),
+});
+
+module.exports = {
+  foodPartnerIdParamSchema,
+  updateFoodPartnerProfileSchema,
+};

@@ -10,7 +10,7 @@ router.get(
   "/wallet",
   authUserMiddleware,
   authRoleMiddleware(["delivery_partner"]),
-  validate(walletSchema),
+  validate(walletSchema, "query"),
   getWallet
 );
 
@@ -19,7 +19,7 @@ router.get(
   "/wallet/transactions",
   authUserMiddleware,
   authRoleMiddleware(["delivery_partner"]),
-  validate(transactionSchema),
+  validate(transactionSchema, "query"),
   getTransactions
 );
 

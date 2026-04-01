@@ -123,10 +123,12 @@ async function fetchAdminDashboardStats() {
 //------------------------------- DELIVERY PARTNER DASHBOARD SERVICE --------------------------------------
 
 async function fetchDeliveryPartnerDashboard(deliveryPartnerId) {
-  const totalDeliveries = await DeliveryOrder.count({ where: { deliveryPartnerId } });
+  const totalDeliveries = await Order.count({
+    where: { deliveryPartnerId, status: ORDER_STATUS.DELIVERED },
+  });
 
-  const totalEarningsData = await DeliveryOrder.findAll({
-    where: { deliveryPartnerId, status: "delivered" },
+  const totalEarningsData = await Order.findAll({
+    where: { deliveryPartnerId, status: ORDER_STATUS.DELIVERED },
     attributes: [[Sequelize.fn("SUM", Sequelize.col("earning")), "totalEarnings"]],
     raw: true,
   });
@@ -134,12 +136,16 @@ async function fetchDeliveryPartnerDashboard(deliveryPartnerId) {
 
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
-  const todayDeliveries = await DeliveryOrder.count({
-    where: { deliveryPartnerId, status: "delivered", createdAt: { [Op.gte]: startOfToday } },
+  const todayDeliveries = await Order.count({
+    where: {
+      deliveryPartnerId,
+      status: ORDER_STATUS.DELIVERED,
+      createdAt: { [Op.gte]: startOfToday },
+    },
   });
 
-  const avgTimeData = await DeliveryOrder.findAll({
-    where: { deliveryPartnerId, status: "delivered" },
+  const avgTimeData = await Order.findAll({
+    where: { deliveryPartnerId, status: ORDER_STATUS.DELIVERED },
     attributes: [[Sequelize.fn("AVG", Sequelize.literal("TIMESTAMPDIFF(SECOND, createdAt, updatedAt)")), "avgSeconds"]],
     raw: true,
   });

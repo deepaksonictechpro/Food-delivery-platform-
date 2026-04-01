@@ -109,7 +109,7 @@ const updateUserProfileSchema = Joi.object({
   fullName: Joi.string().min(3).max(50).trim().optional(),
 
   phoneNumber: phoneField.optional(),
-}).min(1);
+});
 
 //---------------------------- UPDATE FOOD PARTNER TIMING (OPEN/CLOSE) -------------------------
 

@@ -4,38 +4,21 @@ const { sequelize } = require("../config/database");
 //------------------------------- ADD TO CART --------------------------------------
 
 async function addToCartService(userId, foodId, quantity) {
-  const transaction = await sequelize.transaction();
-
-  try {
-    // Check if item already exists
-    const existingItem = await Cart.findOne({
+  return await sequelize.transaction(async (transaction) => {
+    const [cartItem, created] = await Cart.findOrCreate({
       where: { userId, foodId },
+      defaults: { userId, foodId, quantity },
       transaction,
-      lock: transaction.LOCK.UPDATE // Prevent concurrent updates
+      lock: transaction.LOCK.UPDATE,
     });
 
-    if (existingItem) {
-      // Atomically increment quantity
-      await Cart.increment('quantity', {
-        by: quantity,
-        where: { userId, foodId },
-        transaction
-      });
-
-      await transaction.commit();
-
-      // Return updated item
-      return await Cart.findOne({ where: { userId, foodId } });
-    } else {
-      // Create new cart item
-      const newItem = await Cart.create({ userId, foodId, quantity }, { transaction });
-      await transaction.commit();
-      return newItem;
+    if (!created) {
+      await cartItem.increment("quantity", { by: quantity, transaction });
+      await cartItem.reload({ transaction });
     }
-  } catch (error) {
-    await transaction.rollback();
-    throw error;
-  }
+
+    return cartItem;
+  });
 }
 
 //------------------------------- GET CART ITEMS --------------------------------------

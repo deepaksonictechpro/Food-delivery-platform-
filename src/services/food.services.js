@@ -1,6 +1,6 @@
 const { Food, User, Like, Save, Cart } = require("../models");
 const storageService = require("./storage.service");
-const { v4: uuid } = require("uuid");
+const { randomUUID } = require("crypto");
 const { Op, Sequelize } = require("sequelize");
 const { getFoodPartnerStatus } = require("../utils/foodPartnerStatus");
 const { getPagination, getPagingData } = require("../utils/pagination.utility");
@@ -43,7 +43,7 @@ async function createFoodService({ name, description, category, price, file, foo
 
   const uploadResult = await storageService.uploadFile(
     file.buffer,
-    `food-video-${uuid()}`
+    `food-video-${randomUUID()}`
   );
 
   if (!uploadResult || !uploadResult.url) {
@@ -330,8 +330,36 @@ async function updateFoodService(foodId, foodPartnerId, updateData, file) {
   const food = await Food.findOne({ where: { id: foodId, foodPartnerId } });
   if (!food) throw new Error("Food not found or you are not authorized");
 
-  if (file) updateData.file = file;
-  await food.update(updateData);
+  const updates = {};
+
+  if (updateData.name !== undefined) updates.name = updateData.name.trim();
+  if (updateData.description !== undefined) updates.description = updateData.description;
+  if (updateData.category !== undefined) updates.category = updateData.category.trim();
+  if (updateData.price !== undefined) updates.price = Number(updateData.price);
+  if (updateData.isAvailable !== undefined) updates.isAvailable = updateData.isAvailable;
+
+  if (file) {
+    if (!file.mimetype || !file.mimetype.startsWith("video/")) {
+      throw new Error("Only video files are allowed");
+    }
+
+    const uploadResult = await storageService.uploadFile(
+      file.buffer,
+      `food-video-${randomUUID()}`
+    );
+
+    if (!uploadResult?.url) {
+      throw new Error("Video upload failed");
+    }
+
+    updates.video = uploadResult.url;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    throw new Error("At least one field is required");
+  }
+
+  await food.update(updates);
   return food;
 }
 
@@ -356,23 +384,21 @@ async function addSavedToCartService({ userId, foodId }) {
     throw new Error("Food is not in wishlist");
   }
 
-  const existingCart = await Cart.findOne({
-    where: { userId, foodId },
+  return await Cart.sequelize.transaction(async (transaction) => {
+    const [cartItem, created] = await Cart.findOrCreate({
+      where: { userId, foodId },
+      defaults: { userId, foodId, quantity: 1 },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+
+    if (!created) {
+      await cartItem.increment("quantity", { by: 1, transaction });
+      await cartItem.reload({ transaction });
+    }
+
+    return cartItem;
   });
-
-  if (existingCart) {
-    existingCart.quantity += 1;
-    await existingCart.save();
-    return existingCart;
-  }
-
-  const cartItem = await Cart.create({
-    userId,
-    foodId,
-    quantity: 1,
-  });
-
-  return cartItem;
 }
 
 module.exports = {

@@ -3,7 +3,6 @@ const Joi = require("joi");
 const phoneRegex = /^[6-9]\d{9}$/;
 
 const updateDeliveryPartnerProfileSchema = Joi.object({
-
   fullName: Joi.string()
     .min(3)
     .optional(),
@@ -23,16 +22,6 @@ const updateDeliveryPartnerProfileSchema = Joi.object({
 
   drivingLicenseNumber: Joi.string()
     .optional(),
-
-  totalDeliveries: Joi.number()
-    .integer()
-    .min(0)
-    .optional(),
-
-  earnings: Joi.number()
-    .min(0)
-    .optional()
-
 });
 
 module.exports = {

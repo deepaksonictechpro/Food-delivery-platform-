@@ -69,6 +69,31 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 0
     },
 
+    resetOtp: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    isResetOtpVerified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+
+    resetOtpExpiresAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+
+    resetOtpAttempts: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+
+    tokenVersion: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+
 
     // ================= DELIVERY PARTNER INFO =================
     vehicleType: {

@@ -3,18 +3,15 @@ const jwt = require("jsonwebtoken");
 const { User } = require("../models");
 require("dotenv").config();
 
-// Helper: generate 6-digit OTP
 function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Helper: normalize email
 function normalizeEmail(email) {
   return email.toLowerCase().trim();
 }
 
-//------------------------------- USER REGISTRATION --------------------------------------
-
+// ---------------- REGISTER ----------------
 async function registerUserService({ fullName, email, password, role, phoneNumber }) {
   if (!fullName || !email || !password || !role)
     throw new Error("All fields including role are required");
@@ -29,15 +26,13 @@ async function registerUserService({ fullName, email, password, role, phoneNumbe
 
   const otp = generateOtp();
   const hashedOtp = await bcrypt.hash(otp, 10);
-  const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
-  console.log("OTP for Register - ", otp);
 
   const user = await User.create({
     fullName,
     email: normalizedEmail,
     password,
     otp: hashedOtp,
-    otpExpiresAt: otpExpiry,
+    otpExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
     otpAttempts: 0,
     isOtpVerified: false,
     role,
@@ -45,24 +40,22 @@ async function registerUserService({ fullName, email, password, role, phoneNumbe
   });
 
   if (process.env.NODE_ENV === "development") {
-    console.log(`OTP for ${normalizedEmail}: ${otp}`);
   }
+  console.log("OTP for Register - ", otp);
 
   return { userId: user.id, role: user.role };
 }
 
-//------------------------------- VERIFY USER OTP --------------------------------------
-
+// ---------------- VERIFY REGISTER OTP ----------------
 async function verifyUserOtpService(email, otp) {
   if (!email || !otp) throw new Error("Email and OTP are required");
 
-  const normalizedEmail = normalizeEmail(email);
-
-  const user = await User.findOne({ where: { email: normalizedEmail } });
+  const user = await User.findOne({ where: { email: normalizeEmail(email) } });
   if (!user) throw new Error("User not found");
 
   if (!user.otp) throw new Error("OTP not found");
   if (user.otpAttempts >= 5) throw new Error("Too many attempts");
+  if (user.otpExpiresAt < new Date()) throw new Error("OTP expired");
 
   const isValid = await bcrypt.compare(otp, user.otp);
 
@@ -72,39 +65,32 @@ async function verifyUserOtpService(email, otp) {
     throw new Error("Invalid OTP");
   }
 
-  if (user.otpExpiresAt < new Date()) {
-    throw new Error("OTP expired");
-  }
-
-  user.isOtpVerified = true;
-  user.otp = null;
-  user.otpExpiresAt = null;
-  user.otpAttempts = 0;
-
-  await user.save();
+  await user.update({
+    isOtpVerified: true,
+    otp: null,
+    otpExpiresAt: null,
+    otpAttempts: 0,
+  });
 
   return { userId: user.id, role: user.role };
 }
 
-//------------------------------- USER LOGIN --------------------------------------
-
+// ---------------- LOGIN ----------------
 async function loginUserService({ email, password, role }) {
-  if (!email || !password || !role)
-    throw new Error("Email, password, and role are required");
+  const user = await User.findOne({
+    where: { email: normalizeEmail(email), role },
+  });
 
-  const normalizedEmail = normalizeEmail(email);
-
-  const user = await User.findOne({ where: { email: normalizedEmail, role } });
-  if (!user) throw new Error("Invalid email, password, or role");
+  if (!user) throw new Error("Invalid credentials");
 
   if (role !== "admin" && !user.isOtpVerified)
-    throw new Error("Please verify OTP before login");
+    throw new Error("Please verify OTP");
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) throw new Error("Invalid email or password");
+  if (!isPasswordValid) throw new Error("Invalid credentials");
 
   const token = jwt.sign(
-    { id: user.id, role: user.role },
+    { id: user.id, role: user.role, tokenVersion: user.tokenVersion ?? 0 },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
@@ -113,176 +99,156 @@ async function loginUserService({ email, password, role }) {
     token,
     user: {
       id: user.id,
-      email: user.email,
       fullName: user.fullName,
+      email: user.email,
       role: user.role,
       phoneNumber: user.phoneNumber,
+      profileImage: user.profileImage,
+      status: user.status,
     },
   };
 }
 
-//------------------------------- FORGOT PASSWORD --------------------------------------
-
+// ---------------- FORGOT PASSWORD ----------------
 async function forgotPasswordService(email) {
-  if (!email) throw new Error("Email is required");
+  const user = await User.findOne({ where: { email: normalizeEmail(email) } });
 
-  const normalizedEmail = normalizeEmail(email);
-
-  const user = await User.findOne({ where: { email: normalizedEmail } });
-  
   if (user) {
-    // Only generate and send OTP if user exists
     const otp = generateOtp();
-    const hashedOtp = await bcrypt.hash(otp, 10);
-    console.log("Reset password OTP - ", otp);
-
-    user.otp = hashedOtp;
-    user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    user.otpAttempts = 0;
-    user.isOtpVerified = false;
-
-    await user.save();
+    user.resetOtp = await bcrypt.hash(otp, 10);
+    user.resetOtpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    user.resetOtpAttempts = 0;
+    user.isResetOtpVerified = false;
 
     if (process.env.NODE_ENV === "development") {
-      console.log(`Forgot OTP for ${normalizedEmail}: ${otp}`);
     }
+    console.log("Reset OTP - ", otp);
+
+    await user.save();
   }
 
-  // Always return the same message to prevent email enumeration
-  return { message: "If the email exists, an OTP has been sent for password reset" };
+  return { message: "If email exists, OTP sent" };
 }
 
-//------------------------------- VERIFY FORGOT PASSWORD OTP --------------------------------------
-
+// ---------------- VERIFY FORGOT OTP ----------------
 async function verifyForgotPasswordOtpService(email, otp) {
-  if (!email || !otp) throw new Error("Email and OTP are required");
+  const user = await User.findOne({ where: { email: normalizeEmail(email) } });
 
-  const normalizedEmail = normalizeEmail(email);
+  if (!user || !user.resetOtp) throw new Error("OTP not found");
+  if (user.resetOtpAttempts >= 5) throw new Error("Too many attempts");
+  if (user.resetOtpExpiresAt < new Date()) throw new Error("OTP expired");
 
-  const user = await User.findOne({ where: { email: normalizedEmail } });
-  if (!user) throw new Error("User not found");
-
-  if (user.otpAttempts >= 5) throw new Error("Too many attempts");
-
-  const isValid = await bcrypt.compare(otp, user.otp);
+  const isValid = await bcrypt.compare(otp, user.resetOtp);
 
   if (!isValid) {
-    user.otpAttempts += 1;
+    user.resetOtpAttempts += 1;
     await user.save();
     throw new Error("Invalid OTP");
   }
 
-  if (user.otpExpiresAt < new Date()) {
-    throw new Error("OTP expired");
-  }
+  await user.update({
+    isResetOtpVerified: true,
+    resetOtpAttempts: 0,
+  });
 
-  user.isOtpVerified = true;
-  await user.save();
-
-  return { message: "OTP verified. You can now reset password" };
+  return { message: "OTP verified" };
 }
 
-//------------------------------- RESET PASSWORD --------------------------------------
-
+// ---------------- RESET PASSWORD ----------------
 async function resetPasswordService(email, newPassword) {
-  if (!email || !newPassword) {
-    throw new Error("Email and new password are required");
-  }
+  const user = await User.findOne({ where: { email: normalizeEmail(email) } });
 
-  const normalizedEmail = normalizeEmail(email);
-
-  const user = await User.findOne({ where: { email: normalizedEmail } });
   if (!user) throw new Error("User not found");
-
-  // Ensure OTP exists
-  if (!user.otp) {
-    throw new Error("OTP not found or expired");
-  }
-
-  // Ensure OTP verified
-  if (!user.isOtpVerified) {
-    throw new Error("Please verify OTP first");
-  }
-
-  // Check expiry
-  if (user.otpExpiresAt && new Date() > user.otpExpiresAt) {
+  if (!user.isResetOtpVerified) throw new Error("Verify OTP first");
+  if (!user.resetOtpExpiresAt || new Date() > user.resetOtpExpiresAt)
     throw new Error("OTP expired");
-  }
-
-  // HASH PASSWORD (VERY IMPORTANT)
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
 
   await user.update({
-    password: hashedPassword,
-
-    // CLEAR EVERYTHING
-    otp: null,
-    otpExpiresAt: null,
-    otpAttempts: 0,
-    isOtpVerified: false,
+    password: newPassword,
+    resetOtp: null,
+    resetOtpExpiresAt: null,
+    resetOtpAttempts: 0,
+    isResetOtpVerified: false,
+    tokenVersion: (user.tokenVersion ?? 0) + 1,
   });
 
   return { message: "Password reset successfully" };
 }
 
-//------------------------- UPDATE FOOD PARTNER TIMING SERVICE -----------------------
-
-async function updateFoodPartnerTimingService(userId, { openingTime, closingTime }) {
+// ---------------- PROFILE ----------------
+async function fetchUserProfile(userId) {
   const user = await User.findByPk(userId);
 
-  if (!user) {
+  if (!user || user.role !== "user") {
     throw new Error("User not found");
   }
 
+  return {
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    profileImage: user.profileImage,
+    role: user.role,
+    status: user.status,
+    isOtpVerified: user.isOtpVerified,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+}
+
+async function updateUserProfile(userId, data) {
+  const user = await User.findByPk(userId);
+  if (!user) throw new Error("User not found");
+
+  const updates = {};
+
+  if (data.fullName !== undefined) updates.fullName = data.fullName.trim();
+  if (data.phoneNumber !== undefined) updates.phoneNumber = data.phoneNumber;
+  if (data.profileImage !== undefined) updates.profileImage = data.profileImage;
+
+  if (Object.keys(updates).length === 0) {
+    throw new Error("No valid fields provided");
+  }
+
+  await user.update(updates);
+
+  // CLEAN RESPONSE
+  return {
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    profileImage: user.profileImage,
+    role: user.role,
+    status: user.status,
+    isOtpVerified: user.isOtpVerified,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+}
+
+async function updateFoodPartnerTimingService(userId, { openingTime, closingTime }) {
+  const user = await User.findByPk(userId);
+  if (!user) throw new Error("User not found");
   if (user.role !== "food_partner") {
     throw new Error("Only food partner can update timing");
   }
 
   await user.update({ openingTime, closingTime });
-
   return user;
 }
 
-//------------------------- LOGOUT SERVICE -------------------------
+async function logoutService(userId) {
+  const user = await User.findByPk(userId);
+  if (!user) throw new Error("User not found");
 
-async function logoutService() {
-  return { message: "Logged out successfully" };
-}
-
-//------------------------- FETCH USER PROFILE -------------------------
-
-async function fetchUserProfile(userId) {
-  const user = await User.findByPk(userId, {
-    attributes: { exclude: ["password", "otp", "otpExpiresAt", "otpAttempts"] },
+  await user.update({
+    tokenVersion: (user.tokenVersion ?? 0) + 1,
   });
 
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  return user;
+  return { message: "Logged out successfully" };
 }
-
-//------------------------- UPDATE USER PROFILE -------------------------
-
-async function updateUserProfile(userId, data) {
-  const user = await User.findByPk(userId);
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  const updates = {};
-
-  if (data.fullName !== undefined) updates.fullName = data.fullName;
-  if (data.phoneNumber !== undefined) updates.phoneNumber = data.phoneNumber;
-  if (data.profileImage !== undefined) updates.profileImage = data.profileImage;
-
-  await user.update(updates);
-
-  return user;
-}
-
 
 module.exports = {
   registerUserService,

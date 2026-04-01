@@ -50,6 +50,13 @@ async function loginUser(req, res) {
   try {
     const result = await authService.loginUserService(req.body);
 
+    res.cookie("token", result.token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     res.status(200).json({
       success: true,
       message: "Login successful",
@@ -131,7 +138,13 @@ async function resetPassword(req, res) {
 
 async function logoutUser(req, res) {
   try {
-    const result = await authService.logoutService();
+    const result = await authService.logoutService(req.user.id);
+
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
 
     res.status(200).json({
       success: true,
@@ -173,27 +186,31 @@ async function updateUserProfile(req, res) {
   try {
     const userId = req.user.id;
 
-    const data = {
-      fullName: req.body.fullName,
-      phoneNumber: req.body.phoneNumber,
-    };
+    const data = {};
 
-    if (req.file) {
-      data.profileImage = req.file.path;
+    if (req.body.fullName !== undefined) data.fullName = req.body.fullName;
+    if (req.body.phoneNumber !== undefined) data.phoneNumber = req.body.phoneNumber;
+
+    if (req.file) data.profileImage = req.file.path;
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one field required",
+      });
     }
 
     const user = await authService.updateUserProfile(userId, data);
 
     return res.status(200).json({
       success: true,
-      message: "User profile updated successfully",
+      message: "Profile updated",
       data: user,
     });
   } catch (error) {
-    console.error("UPDATE USER PROFILE ERROR:", error.message);
     return res.status(500).json({
       success: false,
-      message: "Failed to update profile",
+      message: error.message,
     });
   }
 }

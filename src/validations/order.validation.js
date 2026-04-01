@@ -4,7 +4,7 @@ const { ORDER_STATUS } = require("../constants/orderStatus.constants");
 const placeOrderSchema = Joi.object({
   addressId: Joi.number().integer().positive(),
   addressLabel: Joi.string().trim().min(1),
-  paymentMethod: Joi.string().valid("COD", "ONLINE", "WALLET").required(),
+  paymentMethod: Joi.string().valid("COD", "WALLET").required(),
 }).or("addressId", "addressLabel").messages({
   "object.missing": "Either addressId or addressLabel is required",
 });
