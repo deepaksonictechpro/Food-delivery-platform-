@@ -25,10 +25,21 @@ async function registerUser(req, res) {
 
 async function verifyUserOtp(req, res) {
   try {
-    const result = await authService.verifyUserOtpService(
-      req.body.email,
-      req.body.otp
-    );
+    const { tempToken, email, otp } = req.body;
+
+    let result;
+
+    if (tempToken) {
+      result = await authService.verifyUserOtpService(tempToken, otp);
+    }
+
+    else if (email) {
+      result = await authService.verifyUserOtpService(email, otp);
+    }
+
+    else {
+      throw new Error("tempToken or email is required");
+    }
 
     res.status(200).json({
       success: true,
@@ -37,9 +48,10 @@ async function verifyUserOtp(req, res) {
     });
   } catch (err) {
     console.error("VERIFY OTP ERROR:", err.message);
+
     res.status(400).json({
       success: false,
-      message: "OTP verification failed",
+      message: err.message, 
     });
   }
 }

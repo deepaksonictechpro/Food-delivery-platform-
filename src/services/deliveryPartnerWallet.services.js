@@ -1,7 +1,8 @@
 const { DeliveryPartnerWallet } = require("../models");
 const { PER_DELIVERY_EARNING } = require("../constants/delivery.constants");
 
-// ---------------- GET WALLET BALANCE ----------------
+// --------------------- GET WALLET BALANCE -----------------------
+
 async function getPartnerWalletService(deliveryPartnerId) {
   const lastTxn = await DeliveryPartnerWallet.findOne({
     where: { deliveryPartnerId },
@@ -13,7 +14,8 @@ async function getPartnerWalletService(deliveryPartnerId) {
   };
 }
 
-// ---------------- GET TRANSACTIONS ----------------
+// ---------------------- GET TRANSACTIONS ------------------------
+
 async function getPartnerTransactionsService(deliveryPartnerId) {
   return await DeliveryPartnerWallet.findAll({
     where: { deliveryPartnerId },
@@ -22,6 +24,7 @@ async function getPartnerTransactionsService(deliveryPartnerId) {
 }
 
 // ---------------- ADD EARNING (USED IN DELIVERY FLOW) ----------------
+
 async function addEarningToWallet(deliveryPartnerId, orderId, t) {
 
   // Strong duplicate check
@@ -29,7 +32,7 @@ async function addEarningToWallet(deliveryPartnerId, orderId, t) {
     where: {
       deliveryPartnerId,
       referenceId: orderId,
-      transactionType: "delivery_earning",
+      transactionType: TXN.DELIVERY_EARNING,
     },
     transaction: t,
     lock: t.LOCK.UPDATE,
@@ -57,7 +60,7 @@ async function addEarningToWallet(deliveryPartnerId, orderId, t) {
       deliveryPartnerId,
       amount,
       type: "credit",
-      transactionType: "delivery_earning",
+      transactionType: TXN.DELIVERY_EARNING,
       referenceId: orderId,
       balanceAfterTransaction: newBalance,
       status: "success",

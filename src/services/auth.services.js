@@ -1,7 +1,10 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { User } = require("../models");
+const { Op } = require("sequelize");
 require("dotenv").config();
+
+const showOtp = process.env.SHOW_OTP === "true";
 
 function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -11,7 +14,8 @@ function normalizeEmail(email) {
   return email.toLowerCase().trim();
 }
 
-// ---------------- REGISTER ----------------
+// --------------------------------------- REGISTER ---------------------------------------
+
 async function registerUserService({ fullName, email, password, role, phoneNumber }) {
   if (!fullName || !email || !password || !role)
     throw new Error("All fields including role are required");
@@ -21,9 +25,43 @@ async function registerUserService({ fullName, email, password, role, phoneNumbe
 
   const normalizedEmail = normalizeEmail(email);
 
-  const existingUser = await User.findOne({ where: { email: normalizedEmail } });
-  if (existingUser) throw new Error("User already exists");
+  // 🔥 CLEAN OLD UNVERIFIED USERS FIRST
+  await User.destroy({
+    where: {
+      isOtpVerified: false,
+      otpExpiresAt: { [Op.lt]: new Date() },
+    },
+  });
 
+  const existingUser = await User.findOne({ where: { email: normalizedEmail } });
+
+  if (existingUser) {
+    if (existingUser.isOtpVerified) {
+      throw new Error("User already exists");
+    }
+
+    // ✅ RESEND OTP (reuse same record)
+    const otp = generateOtp();
+    const hashedOtp = await bcrypt.hash(otp, 10);
+
+    await existingUser.update({
+      fullName,
+      password,
+      role,
+      phoneNumber,
+      otp: hashedOtp,
+      otpExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      otpAttempts: 0,
+    });
+
+    if (showOtp) {
+      console.log("OTP for Register (retry):", otp);
+    }
+
+    return { userId: existingUser.id, role: existingUser.role };
+  }
+
+  // ✅ NEW USER CREATE
   const otp = generateOtp();
   const hashedOtp = await bcrypt.hash(otp, 10);
 
@@ -39,18 +77,22 @@ async function registerUserService({ fullName, email, password, role, phoneNumbe
     phoneNumber,
   });
 
-  if (process.env.NODE_ENV === "development") {
+  if (showOtp) {
+    console.log("OTP for Register:", otp);
   }
-  console.log("OTP for Register - ", otp);
 
   return { userId: user.id, role: user.role };
 }
 
-// ---------------- VERIFY REGISTER OTP ----------------
+// --------------------------------------- VERIFY REGISTER OTP ---------------------------------------
+
 async function verifyUserOtpService(email, otp) {
   if (!email || !otp) throw new Error("Email and OTP are required");
 
-  const user = await User.findOne({ where: { email: normalizeEmail(email) } });
+  const user = await User.findOne({
+    where: { email: normalizeEmail(email) },
+  });
+
   if (!user) throw new Error("User not found");
 
   if (!user.otp) throw new Error("OTP not found");
@@ -75,7 +117,8 @@ async function verifyUserOtpService(email, otp) {
   return { userId: user.id, role: user.role };
 }
 
-// ---------------- LOGIN ----------------
+// --------------------------------------- LOGIN ---------------------------------------
+
 async function loginUserService({ email, password, role }) {
   const user = await User.findOne({
     where: { email: normalizeEmail(email), role },
@@ -109,7 +152,8 @@ async function loginUserService({ email, password, role }) {
   };
 }
 
-// ---------------- FORGOT PASSWORD ----------------
+// --------------------------------------- FORGOT PASSWORD ---------------------------------------
+
 async function forgotPasswordService(email) {
   const user = await User.findOne({ where: { email: normalizeEmail(email) } });
 
@@ -120,9 +164,9 @@ async function forgotPasswordService(email) {
     user.resetOtpAttempts = 0;
     user.isResetOtpVerified = false;
 
-    if (process.env.NODE_ENV === "development") {
+    if (showOtp) {
+      console.log("OTP for Forgot Password:", otp);
     }
-    console.log("Reset OTP - ", otp);
 
     await user.save();
   }
@@ -130,7 +174,8 @@ async function forgotPasswordService(email) {
   return { message: "If email exists, OTP sent" };
 }
 
-// ---------------- VERIFY FORGOT OTP ----------------
+// --------------------------------------- VERIFY FORGOT OTP ---------------------------------------
+
 async function verifyForgotPasswordOtpService(email, otp) {
   const user = await User.findOne({ where: { email: normalizeEmail(email) } });
 
@@ -154,7 +199,8 @@ async function verifyForgotPasswordOtpService(email, otp) {
   return { message: "OTP verified" };
 }
 
-// ---------------- RESET PASSWORD ----------------
+// ---------------------------------- RESET PASSWORD ---------------------------------------
+
 async function resetPasswordService(email, newPassword) {
   const user = await User.findOne({ where: { email: normalizeEmail(email) } });
 
@@ -175,7 +221,23 @@ async function resetPasswordService(email, newPassword) {
   return { message: "Password reset successfully" };
 }
 
-// ---------------- PROFILE ----------------
+// ---------------------------------- AUTO CLEANUP ---------------------------------------
+
+async function cleanupUnverifiedUsers() {
+  try {
+    await User.destroy({
+      where: {
+        isOtpVerified: false,
+        otpExpiresAt: { [Op.lt]: new Date() },
+      },
+    });
+  } catch (err) {
+    console.error("CLEANUP ERROR:", err.message);
+  }
+}
+
+// ----------------------------------GET PROFILE -------------------------------------
+
 async function fetchUserProfile(userId) {
   const user = await User.findByPk(userId);
 
@@ -197,6 +259,8 @@ async function fetchUserProfile(userId) {
   };
 }
 
+// ---------------------------- UPDATE PROFILE -----------------------------------
+
 async function updateUserProfile(userId, data) {
   const user = await User.findByPk(userId);
   if (!user) throw new Error("User not found");
@@ -213,7 +277,6 @@ async function updateUserProfile(userId, data) {
 
   await user.update(updates);
 
-  // CLEAN RESPONSE
   return {
     id: user.id,
     fullName: user.fullName,
@@ -228,6 +291,8 @@ async function updateUserProfile(userId, data) {
   };
 }
 
+//--------------------------- update food partner timing -----------------------------
+
 async function updateFoodPartnerTimingService(userId, { openingTime, closingTime }) {
   const user = await User.findByPk(userId);
   if (!user) throw new Error("User not found");
@@ -238,6 +303,8 @@ async function updateFoodPartnerTimingService(userId, { openingTime, closingTime
   await user.update({ openingTime, closingTime });
   return user;
 }
+
+// -------------------------------- LOGOUT -----------------------------------------
 
 async function logoutService(userId) {
   const user = await User.findByPk(userId);
@@ -261,4 +328,5 @@ module.exports = {
   logoutService,
   fetchUserProfile,
   updateUserProfile,
+  cleanupUnverifiedUsers,
 };

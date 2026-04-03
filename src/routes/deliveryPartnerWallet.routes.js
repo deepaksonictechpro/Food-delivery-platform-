@@ -7,7 +7,7 @@ const {authUserMiddleware, authRoleMiddleware} = require("../middlewares/auth.mi
 
 // ---------------- GET WALLET ----------------
 router.get(
-  "/Get-wallet",
+  "/get-wallet",
   authUserMiddleware,
   authRoleMiddleware(["delivery_partner"]),
   validate(walletSchema, "query"),

@@ -22,8 +22,10 @@ router.get("/partners/food", authAdminMiddleware, adminController.getAllFoodPart
 router.get("/partners/delivery", authAdminMiddleware, adminController.getAllDeliveryPartners);
 
 
+router.get("/get-profile", authAdminMiddleware, adminController.getAdminProfile);
+
 router.put(
-  "/profile",
+  "/update-profile",
   authAdminMiddleware,
   adminUpload.single("profileImage"),
   validate(updateAdminProfileSchema),

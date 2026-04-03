@@ -1,6 +1,7 @@
 const { Wallet, WalletTransaction, Order } = require("../models");
 const { getPagination, getPagingData } = require("../utils/pagination.utility");
 const { sequelize } = require("../config/database");
+const TXN = require("../constants/transactionTypes.constants");
 
 // ------------------------- Get Wallet ----------------------------
 
@@ -73,7 +74,7 @@ async function addMoneyService(userId, amount) {
         userId,
         type: "credit",
         amount,
-        transactionType: "test_topup",
+        transactionType: TXN.ADD_MONEY,
         balanceAfterTransaction: newBalance,
         status: "success",
       },
@@ -142,7 +143,7 @@ const payWithWalletService = async (userId, orderId) => {
         userId,
         type: "debit",
         amount: order.totalAmount,
-        transactionType: "order_payment",
+        transactionType: TXN.ORDER_PAYMENT,
         referenceId: order.id,
         balanceAfterTransaction: newBalance,
         status: "success",
@@ -184,7 +185,7 @@ async function refundToWalletService(userId, orderId, t) {
     where: {
       userId,
       referenceId: orderId,
-      transactionType: "refund",
+      transactionType: TXN.REFUND,
     },
     transaction: t,
   });
@@ -218,7 +219,7 @@ async function refundToWalletService(userId, orderId, t) {
       userId,
       type: "credit",
       amount,
-      transactionType: "refund",
+      transactionType: TXN.REFUND,
       referenceId: orderId,
       balanceAfterTransaction: newBalance,
       status: "success",
