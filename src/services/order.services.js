@@ -180,13 +180,13 @@ async function getAvailableOrdersService({
 // ------------------------------- ACCEPT ORDER SERVICE --------------------------------------
 
 async function acceptOrderService(orderId, deliveryPartnerId) {
-  await checkDeliveryPartnerProfile(deliveryPartnerId);
+  const partner = await checkDeliveryPartnerProfile(deliveryPartnerId);
 
   return await sequelize.transaction(async (transaction) => {
     const order = await Order.findOne({
       where: { id: orderId },
       include: [
-        { model: User, as: "user", attributes: ["id", "fullName"] },
+        { model: User, as: "user", attributes: ["id", "fullName", "openingTime", "closingTime"] },
         { model: Address, as: "addressInfo" },
         { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
       ],
@@ -195,8 +195,19 @@ async function acceptOrderService(orderId, deliveryPartnerId) {
     });
 
     if (!order) throw new Error("Order not found");
+
     if (order.status !== ORDER_STATUS.PENDING || order.deliveryPartnerId) {
       throw new Error("Order not found or already assigned");
+    }
+
+    // CHECK FOOD PARTNER STATUS
+    const restaurantStatus = getFoodPartnerStatus(
+      order.user?.openingTime,
+      order.user?.closingTime
+    );
+
+    if (restaurantStatus !== "OPEN") {
+      throw new Error("Restaurant is currently closed");
     }
 
     order.deliveryPartnerId = deliveryPartnerId;
@@ -229,6 +240,15 @@ async function getAssignedDeliveriesService(deliveryPartnerId, currentUser = {})
 async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, cashCollected = null) {
   return await sequelize.transaction(async (t) => {
 
+    const partner = await User.findOne({
+      where: { id: deliveryPartnerId, role: "delivery_partner" },
+      transaction: t,
+    });
+
+    if (!partner) {
+      throw new Error("Only delivery partner can update status");
+    }
+
     if (![ORDER_STATUS.PICKED_UP, ORDER_STATUS.DELIVERED].includes(status)) {
       throw new Error("Invalid status");
     }
@@ -240,17 +260,15 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, c
         { model: OrderItem, as: 'items', include: [{ model: Food, as: 'food' }] },
       ],
       transaction: t,
-      lock: t.LOCK.UPDATE, // prevents race condition
+      lock: t.LOCK.UPDATE,
     });
 
     if (!order) throw new Error("Order not found");
 
-    // Already delivered protection
     if (order.status === ORDER_STATUS.DELIVERED) {
       throw new Error("Order already delivered");
     }
 
-    // FLOW ENFORCEMENT
     if (status === ORDER_STATUS.PICKED_UP && order.status !== ORDER_STATUS.ACCEPTED) {
       throw new Error("Order must be ACCEPTED before pickup");
     }
@@ -259,12 +277,10 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, c
       throw new Error("Order must be PICKED_UP before delivery");
     }
 
-    // Update COD flag
     if (cashCollected !== null) {
       order.cashCollected = !!cashCollected;
     }
 
-    //Pickup validation
     if (
       status === ORDER_STATUS.PICKED_UP &&
       order.paymentMethod !== "COD" &&
@@ -273,8 +289,11 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, c
       throw new Error("Cannot pickup unpaid order");
     }
 
-    // DELIVERY LOGIC
+    // UPDATED BLOCK
     if (status === ORDER_STATUS.DELIVERED) {
+
+      //track actual delivery time
+      order.deliveredAt = new Date();
 
       if (order.paymentMethod === "WALLET") {
         const paymentTx = await WalletTransaction.findOne({
@@ -302,10 +321,8 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, c
         throw new Error("Earning already processed for this order");
       }
 
-      // SET earning
       order.earning = PER_DELIVERY_EARNING;
 
-      // Update stats
       await User.increment(
         {
           earnings: PER_DELIVERY_EARNING,
@@ -317,11 +334,9 @@ async function updateDeliveryStatusService(orderId, deliveryPartnerId, status, c
         }
       );
 
-      //  Wallet earning (SAFE)
       await addEarningToWallet(deliveryPartnerId, order.id, t);
     }
 
-    // FINAL STATUS
     order.status = status;
     await order.save({ transaction: t });
 

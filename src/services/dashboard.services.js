@@ -140,7 +140,7 @@ async function fetchDeliveryPartnerDashboard(deliveryPartnerId) {
     where: {
       deliveryPartnerId,
       status: ORDER_STATUS.DELIVERED,
-      createdAt: { [Op.gte]: startOfToday },
+      deliveredAt: { [Op.gte]: startOfToday },
     },
   });
 
